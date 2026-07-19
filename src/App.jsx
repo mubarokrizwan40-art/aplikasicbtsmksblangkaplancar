@@ -1020,16 +1020,16 @@ export default function CBTSystem() {
     setIsLoggedIn(true);
   };
 
-  if (!isLoggedIn) {
+ if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-[#f0f4f8] flex items-center justify-center p-4">
         <div className="bg-white w-full max-w-md rounded-[32px] shadow-lg overflow-hidden relative">
           
-          {/* Garis Hijau di Atas (Top Border) */}
+          {/* Garis Hijau di Atas */}
           <div className="h-3 bg-[#008751] w-full absolute top-0 left-0"></div>
 
           <div className="p-8 pt-10 flex flex-col items-center">
-            {/* Logo Sekolah (Menggunakan variabel logoSekolah dari import) */}
+            {/* Logo Sekolah */}
             <img src={logoSekolah} alt="Logo SMK Samudera Buana" className="w-24 h-auto object-contain mb-4" />
             
             {/* Judul & Sub-judul */}
@@ -1046,7 +1046,7 @@ export default function CBTSystem() {
                 placeholder="Masukkan Username / NISN" 
                 value={loginData.nisn} 
                 onChange={e => setLoginData({...loginData, nisn: e.target.value})} 
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0077b6] focus:border-transparent text-gray-700 placeholder-gray-400" 
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0077b6] focus:border-transparent placeholder-gray-400" 
               />
               
               {/* Input Password */}
@@ -1056,17 +1056,17 @@ export default function CBTSystem() {
                 placeholder="Masukkan Password" 
                 value={loginData.password} 
                 onChange={e => setLoginData({...loginData, password: e.target.value})} 
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0077b6] focus:border-transparent text-gray-700 placeholder-gray-400" 
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0077b6] focus:border-transparent placeholder-gray-400" 
               />
 
-              {/* Input Token Ujian (Disembunyikan secara visual jika guru, tapi tetap diperlukan sistem) */}
+              {/* Input Token Ujian */}
               <div className="pt-2">
                 <input 
                   type="text" 
                   placeholder="Token Ujian (Khusus Siswa)" 
                   value={loginData.token} 
                   onChange={e => setLoginData({...loginData, token: e.target.value.toUpperCase()})} 
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0077b6] focus:border-transparent text-gray-700 placeholder-gray-400" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0077b6] focus:border-transparent placeholder-gray-400" 
                 />
                 <p className="text-center text-[10px] text-gray-400 font-medium mt-1">
                   *Kosongkan Token Ujian jika masuk sebagai Guru/Admin
