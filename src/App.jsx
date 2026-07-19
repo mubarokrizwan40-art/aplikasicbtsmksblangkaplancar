@@ -1104,7 +1104,7 @@ export default function CBTSystem() {
         {currentUser?.role === 'siswa' ? <StudentView currentUser={currentUser} currentSesi={currentSesi} /> : <DashboardView currentUser={currentUser} />}
       // Tambahkan ini di bagian paling bawah return kedua (Dashboard)
         <div className="text-center p-4 text-xs text-gray-400">
-        Copyright © rzwann_m
+         Copyright © rzwann_m
         </div>
       </div>
     </div>
