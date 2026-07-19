@@ -1101,7 +1101,6 @@ export default function CBTSystem() {
       </nav>
       <div className="flex-1 overflow-auto bg-gray-100">
         {currentUser?.role === 'siswa' ? <StudentView currentUser={currentUser} currentSesi={currentSesi} /> : <DashboardView currentUser={currentUser} />}
-        // Tambahkan ini di bagian paling bawah return kedua (Dashboard)
         <div className="text-center p-4 text-xs text-gray-400">
           Copyright © rzwann_m
         </div>
