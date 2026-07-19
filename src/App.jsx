@@ -1021,17 +1021,74 @@ export default function CBTSystem() {
   };
 
   if (!isLoggedIn) {
+   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-xl w-full max-w-md border border-gray-200 overflow-hidden">
-          <div className="p-8 text-center border-b bg-gray-50"><img src={logoSekolah} alt="Logo" className="w-24 h-24 mx-auto mb-4 object-contain" /><h1 className="text-xl font-bold text-gray-800">Portal Ujian Sekolah</h1></div>
-          <form onSubmit={handleLogin} className="p-8 space-y-4">
-            <input type="text" required placeholder="NISN / NIP / Username" value={loginData.nisn} onChange={e => setLoginData({...loginData, nisn: e.target.value})} className="w-full p-3 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
-            <input type="password" required placeholder="Password" value={loginData.password} onChange={e => setLoginData({...loginData, password: e.target.value})} className="w-full p-3 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
-            <div className="bg-blue-50 p-2 rounded text-xs text-blue-800 mb-2">*Kosongkan Token Ujian jika masuk sebagai Guru/Admin.</div>
-            <input type="text" placeholder="Token Ujian (Khusus Siswa)" value={loginData.token} onChange={e => setLoginData({...loginData, token: e.target.value.toUpperCase()})} className="w-full p-3 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
-            <button type="submit" className="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition">Masuk ke Sistem</button>
-          </form>
+      <div className="min-h-screen bg-[#f0f4f8] flex items-center justify-center p-4">
+        <div className="bg-white w-full max-w-md rounded-[32px] shadow-lg overflow-hidden relative">
+          
+          {/* Garis Hijau di Atas (Top Border) */}
+          <div className="h-3 bg-[#008751] w-full absolute top-0 left-0"></div>
+
+          <div className="p-8 pt-10 flex flex-col items-center">
+            {/* Logo Sekolah (Menggunakan variabel logoSekolah dari import) */}
+            <img src={logoSekolah} alt="Logo SMK Samudera Buana" className="w-24 h-auto object-contain mb-4" />
+            
+            {/* Judul & Sub-judul */}
+            <h1 className="text-2xl font-bold text-[#0077b6] text-center mb-1">PORTAL SMK SAMUDERA BUANA</h1>
+            <p className="text-gray-500 text-sm text-center mb-8">Login siswa, guru, atau admin</p>
+
+            {/* Form Login */}
+            <form onSubmit={handleLogin} className="w-full space-y-4">
+              
+              {/* Input Username */}
+              <input 
+                type="text" 
+                required 
+                placeholder="Masukkan Username / NISN" 
+                value={loginData.nisn} 
+                onChange={e => setLoginData({...loginData, nisn: e.target.value})} 
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0077b6] focus:border-transparent text-gray-700 placeholder-gray-400" 
+              />
+              
+              {/* Input Password */}
+              <input 
+                type="password" 
+                required 
+                placeholder="Masukkan Password" 
+                value={loginData.password} 
+                onChange={e => setLoginData({...loginData, password: e.target.value})} 
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0077b6] focus:border-transparent text-gray-700 placeholder-gray-400" 
+              />
+
+              {/* Input Token Ujian (Disembunyikan secara visual jika guru, tapi tetap diperlukan sistem) */}
+              <div className="pt-2">
+                <input 
+                  type="text" 
+                  placeholder="Token Ujian (Khusus Siswa)" 
+                  value={loginData.token} 
+                  onChange={e => setLoginData({...loginData, token: e.target.value.toUpperCase()})} 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0077b6] focus:border-transparent text-gray-700 placeholder-gray-400" 
+                />
+                <p className="text-center text-[10px] text-gray-400 font-medium mt-1">
+                  *Kosongkan Token Ujian jika masuk sebagai Guru/Admin
+                </p>
+              </div>
+
+              {/* Tombol Login */}
+              <button 
+                type="submit" 
+                className="w-full bg-[#0077b6] hover:bg-[#025f92] text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 mt-2 tracking-wide"
+              >
+                LOGIN
+              </button>
+            </form>
+
+            {/* Footer Copyright */}
+            <div className="w-full border-t border-gray-100 mt-8 pt-4">
+              <p className="text-center text-xs text-gray-400 font-medium">Copyright © rzwann_m</p>
+            </div>
+
+          </div>
         </div>
       </div>
     );
@@ -1045,6 +1102,10 @@ export default function CBTSystem() {
       </nav>
       <div className="flex-1 overflow-auto bg-gray-100">
         {currentUser?.role === 'siswa' ? <StudentView currentUser={currentUser} currentSesi={currentSesi} /> : <DashboardView currentUser={currentUser} />}
+      // Tambahkan ini di bagian paling bawah return kedua (Dashboard)
+        <div className="text-center p-4 text-xs text-gray-400">
+        Copyright © rzwann_m
+        </div>
       </div>
     </div>
   );
