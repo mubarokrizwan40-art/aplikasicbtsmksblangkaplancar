@@ -47,6 +47,7 @@ const DashboardView = ({ currentUser }) => {
   // --- FILTER ---
   const [filterKelasNilai, setFilterKelasNilai] = useState('');
   const [filterMapelNilai, setFilterMapelNilai] = useState('');
+  const [filterKelasSiswa, setFilterKelasSiswa] = useState('');
 
   useEffect(() => { fetchData(true); }, [activeTab]);
 
