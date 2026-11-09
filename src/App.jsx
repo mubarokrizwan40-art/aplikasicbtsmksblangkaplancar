@@ -1243,39 +1243,42 @@ export default function CBTSystem() {
   }
 
   return (
-    /* 1. CONTAINER UTAMA: h-screen w-screen overflow-hidden agar 100% Full Layar Laptop tanpa double scrollbar */
-    <div className="h-screen w-screen flex flex-col bg-gray-100 font-sans overflow-hidden">
+    <div className="h-screen w-screen flex flex-col bg-slate-50 font-sans overflow-hidden text-slate-800">
       
-      {/* 2. NAVBAR/HEADER: Mengubah p-4 menjadi py-2 px-5 agar ramping & tidak terlalu tinggi */}
-      <nav className="bg-gray-900 text-white py-2 px-5 flex justify-between items-center shadow-lg z-10 shrink-0">
-        <span className="font-bold flex items-center text-sm tracking-wide">
-          <Monitor className="mr-2 w-4 h-4 text-blue-400" /> 
-          CBT Online - Portal {currentUser?.role?.toUpperCase()}
-        </span>
+      {/* NAVBAR ATAS (Tema Terang / SRMS Style) */}
+      <nav className="h-16 bg-white border-b border-slate-200 px-6 flex justify-between items-center z-20 shrink-0 shadow-sm">
+        <div className="flex items-center space-x-3">
+          {/* Logo SMK Samudera Buana */}
+          <div className="w-10 h-10 flex items-center justify-center">
+            <img src={logoSekolah} alt="Logo SMK" className="w-full h-full object-contain" />
+          </div>
+          <div>
+            <h1 className="font-bold text-[15px] text-sky-800 leading-tight">CBT SAMUDERA BUANA</h1>
+            <p className="text-[11px] text-slate-500 font-medium tracking-wide">PORTAL {currentUser?.role?.toUpperCase()}</p>
+          </div>
+        </div>
         
-        {/* Tombol Keluar Ramping */}
-        <button 
-          onClick={() => { setIsLoggedIn(false); setCurrentUser(null); setCurrentSesi(null); setLoginData({ nisn: '', password: '', token: '' }); }} 
-          className="bg-red-600 px-3 py-1.5 rounded text-xs font-bold hover:bg-red-700 flex items-center transition shadow-sm"
-        >
-          <LogOut size={14} className="mr-1" /> Keluar
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="text-right hidden sm:block">
+            <p className="text-[13px] font-bold text-slate-700">{currentUser?.nama_lengkap || 'Pengguna'}</p>
+            <p className="text-[11px] text-slate-400 capitalize">{currentUser?.role}</p>
+          </div>
+          <button 
+            onClick={() => { setIsLoggedIn(false); setCurrentUser(null); setCurrentSesi(null); setLoginData({ nisn: '', password: '', token: '' }); }} 
+            className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center gap-2"
+          >
+            <LogOut size={16} /> Keluar
+          </button>
+        </div>
       </nav>
 
-      {/* 3. AREA KONTEN UTAMA: Memenuhi sisa ruang dari atas ke bawah */}
-      <div className="flex-1 overflow-auto bg-gray-100 flex flex-col w-full">
-        <div className="flex-1 w-full">
-          {currentUser?.role === 'siswa' ? (
-            <StudentView currentUser={currentUser} currentSesi={currentSesi} />
-          ) : (
-            <DashboardView currentUser={currentUser} />
-          )}
-        </div>
-        
-        {/* Footer Ramping */}
-        <div className="text-center py-2 text-[11px] text-gray-400 shrink-0 border-t border-gray-200 bg-white">
-          Copyright © rzwann_m
-        </div>
+      {/* AREA KONTEN UTAMA */}
+      <div className="flex-1 overflow-hidden flex w-full">
+        {currentUser?.role === 'siswa' ? (
+          <StudentView currentUser={currentUser} currentSesi={currentSesi} />
+        ) : (
+          <DashboardView currentUser={currentUser} />
+        )}
       </div>
     </div>
   );
