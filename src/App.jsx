@@ -71,7 +71,7 @@ const DashboardView = ({ currentUser }) => {
 
     if (activeTab === 'soal' || activeTab === 'ruangan') {
       const { data: dPaket } = await supabase.from('paket_ujian').select('*, mata_pelajaran(nama_mapel)').order('id', { ascending: false });
-      const { data: dSoal } = await supabase.from('soal').select('id, paket_id, teks_pertanyaan, gambar_url, opsi_a, opsi_b, opsi_c, opsi_d, kunci_jawaban, bobot_nilai, status').order('id', { ascending: false });
+      const { data: dSoal } = await supabase.from('soal').select('id, paket_id, teks_pertanyaan, gambar_url, opsi_a, opsi_b, opsi_c, opsi_d, opsi_e kunci_jawaban, bobot_nilai, status').order('id', { ascending: false });
       if (dPaket) setDaftarPaket(dPaket);
       if (dSoal) setDaftarSoal(dSoal);
     }
@@ -555,6 +555,7 @@ const DashboardView = ({ currentUser }) => {
                                   opsi_b: String(row.B || row.b || ''),
                                   opsi_c: String(row.C || row.c || ''),
                                   opsi_d: String(row.D || row.d || ''),
+                                  opsi_e: String(row.E || row.d || ''),
                                   kunci_jawaban: String(row.Kunci || row.kunci || 'A'),
                                   bobot_nilai: Number(row.Bobot || row.bobot || 10),
                                   status: 'publish'
@@ -1027,7 +1028,7 @@ const StudentView = ({ currentUser, currentSesi }) => {
             <p className="text-lg font-medium text-gray-900 mb-6 whitespace-pre-line text-left">{soalAktif?.teks_pertanyaan}</p>
             
             <div className="space-y-3">
-              {['A', 'B', 'C', 'D'].map((displayLabel, index) => {
+              {['A', 'B', 'C', 'D', 'E'].map((displayLabel, index) => {
                 const originalOptionLetter = soalAktif.shuffledOptions[index]; 
                 const optionText = soalAktif[`opsi_${originalOptionLetter.toLowerCase()}`]; 
                 const isSelected = jawabanSiswa[soalAktif.id] === originalOptionLetter;
