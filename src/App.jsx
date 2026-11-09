@@ -43,6 +43,7 @@ const DashboardView = ({ currentUser }) => {
   const [formPaket, setFormPaket] = useState({ mapel_id: '', kelas_jurusan: '' });
   const [formSoal, setFormSoal] = useState({ teks: '', a: '', b: '', c: '', d: '', e: '', kunci: 'A', bobot: 10, status: 'publish' });
   const [selectedImage, setSelectedImage] = useState(null);
+  const [editingSoalId, setEditingSoalId] = useState(null);
 
   // --- FILTER ---
   const [filterKelasNilai, setFilterKelasNilai] = useState('');
@@ -173,6 +174,27 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
     fetchData(false);
   };
 
+  const handleEditSoal = (soal) => {
+    setEditingSoalId(soal.id);
+    setFormSoal({
+      teks: soal.teks_pertanyaan || '',
+      a: soal.opsi_a || '',
+      b: soal.opsi_b || '',
+      c: soal.opsi_c || '',
+      d: soal.opsi_d || '',
+      e: soal.opsi_e || '',
+      kunci: soal.kunci_jawaban || 'A',
+      bobot: soal.bobot_nilai || 10,
+      status: soal.status || 'draft'
+    });
+  };
+
+  const handleBatalEdit = () => {
+    setEditingSoalId(null);
+    setFormSoal({ teks: '', a: '', b: '', c: '', d: '', e: '', kunci: 'A', bobot: 10, status: 'publish' });
+    setSelectedImage(null);
+  };
+
   const handleTambahSoal = async (e) => {
     e.preventDefault();
     setIsUploading(true);
@@ -183,27 +205,48 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
         await supabase.storage.from('soal-gambar').upload(fileName, selectedImage);
         finalGambarUrl = supabase.storage.from('soal-gambar').getPublicUrl(fileName).data.publicUrl;
       }
-      const { error } = await supabase.from('soal').insert([{ paket_id: selectedPaket.id, mapel_id: selectedPaket.mapel_id, teks_pertanyaan: formSoal.teks, opsi_a: formSoal.a, opsi_b: formSoal.b, opsi_c: formSoal.c, opsi_d: formSoal.d, opsi_e: formSoal.e, kunci_jawaban: formSoal.kunci, bobot_nilai: parseInt(formSoal.bobot), gambar_url: finalGambarUrl, status: formSoal.status }]);
-      if (error) throw error;
-      setFormSoal({ ...formSoal, teks: '', a: '', b: '', c: '', d: '', e: '' }); setSelectedImage(null); fetchData(true);
-    } catch (err) { alert(err.message); } finally { setIsUploading(false); }
-  };
 
-  const uploadExcel = async (e, table, mapper) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      setIsUploading(true);
-      try {
-        const workbook = XLSX.read(evt.target.result, { type: 'binary' });
-        const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-        const formattedData = mapper ? rawData.map(mapper).filter(Boolean) : rawData;
-        await supabase.from(table).insert(formattedData);
-        alert(`Sukses mengimpor ${formattedData.length} baris!`); fetchData(true);
-      } catch (err) { alert("Error Import: Pastikan format tabel di Excel sudah benar."); } finally { setIsUploading(false); e.target.value = ''; }
-    };
-    reader.readAsBinaryString(file);
+      if (editingSoalId) {
+        // PROSES UPDATE
+        const updatePayload = {
+          teks_pertanyaan: formSoal.teks,
+          opsi_a: formSoal.a,
+          opsi_b: formSoal.b,
+          opsi_c: formSoal.c,
+          opsi_d: formSoal.d,
+          opsi_e: formSoal.e,
+          kunci_jawaban: formSoal.kunci,
+          bobot_nilai: parseInt(formSoal.bobot),
+          status: formSoal.status
+        };
+        if (finalGambarUrl) updatePayload.gambar_url = finalGambarUrl;
+
+        const { error } = await supabase.from('soal').update(updatePayload).eq('id', editingSoalId);
+        if (error) throw error;
+        setEditingSoalId(null);
+      } else {
+        // PROSES SIMPAN BARU
+        const { error } = await supabase.from('soal').insert([{ 
+          paket_id: selectedPaket.id, 
+          mapel_id: selectedPaket.mapel_id, 
+          teks_pertanyaan: formSoal.teks, 
+          opsi_a: formSoal.a, 
+          opsi_b: formSoal.b, 
+          opsi_c: formSoal.c, 
+          opsi_d: formSoal.d, 
+          opsi_e: formSoal.e, 
+          kunci_jawaban: formSoal.kunci, 
+          bobot_nilai: parseInt(formSoal.bobot), 
+          gambar_url: finalGambarUrl, 
+          status: formSoal.status 
+        }]);
+        if (error) throw error;
+      }
+
+      setFormSoal({ teks: '', a: '', b: '', c: '', d: '', e: '', kunci: 'A', bobot: 10, status: 'publish' });
+      setSelectedImage(null);
+      fetchData(true);
+    } catch (err) { alert(err.message); } finally { setIsUploading(false); }
   };
 
   const exportToExcel = (dataFiltered) => {
@@ -519,28 +562,50 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                       <div className="xl:col-span-1 space-y-4 sticky top-6">
                         <form onSubmit={handleTambahSoal} className="bg-white p-5 rounded-lg shadow border border-gray-200 space-y-4">
-                          <h3 className="font-bold text-gray-800 text-lg mb-2 flex items-center"><PlusCircle size={18} className="mr-2 text-blue-600" /> Tulis Soal Manual</h3>
-                          <div><label className="text-xs font-bold text-gray-500 block mb-1">PERTANYAAN</label><textarea required rows="3" value={formSoal.teks} onChange={e => setFormSoal({ ...formSoal, teks: e.target.value })} className="w-full p-2 border rounded text-sm outline-none"></textarea></div>
-                          <div><label className="text-xs font-bold text-gray-500 block mb-1">GAMBAR (Opsional)</label><input type="file" accept="image/*" onChange={e => setSelectedImage(e.target.files[0])} className="w-full text-xs border p-1 rounded bg-gray-50" /></div>
-                         <div className="grid grid-cols-2 gap-2">
+                          <h3 className="font-bold text-gray-800 text-lg mb-2 flex items-center">
+                            <PlusCircle size={18} className="mr-2 text-blue-600" /> 
+                            {editingSoalId ? "Edit Soal" : "Tulis Soal Manual"}
+                          </h3>
+                          
+                          <div>
+                            <label className="text-xs font-bold text-gray-500 block mb-1">PERTANYAAN</label>
+                            <textarea required rows="3" value={formSoal.teks} onChange={e => setFormSoal({ ...formSoal, teks: e.target.value })} className="w-full p-2 border rounded text-sm outline-none"></textarea>
+                          </div>
+
+                          <div>
+                            <label className="text-xs font-bold text-gray-500 block mb-1">GAMBAR (Opsional)</label>
+                            <input type="file" accept="image/*" onChange={e => setSelectedImage(e.target.files[0])} className="w-full text-xs border p-1 rounded bg-gray-50" />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
                             <input required placeholder="Opsi A" value={formSoal.a} onChange={e => setFormSoal({ ...formSoal, a: e.target.value })} className="border p-2 rounded text-sm" />
                             <input required placeholder="Opsi B" value={formSoal.b} onChange={e => setFormSoal({ ...formSoal, b: e.target.value })} className="border p-2 rounded text-sm" />
                             <input required placeholder="Opsi C" value={formSoal.c} onChange={e => setFormSoal({ ...formSoal, c: e.target.value })} className="border p-2 rounded text-sm" />
                             <input required placeholder="Opsi D" value={formSoal.d} onChange={e => setFormSoal({ ...formSoal, d: e.target.value })} className="border p-2 rounded text-sm" />
                             <input placeholder="Opsi E (Opsional)" value={formSoal.e} onChange={e => setFormSoal({ ...formSoal, e: e.target.value })} className="border p-2 rounded text-sm col-span-2" />
                           </div>
+
                           <div className="grid grid-cols-3 gap-2">
                             <div>
                               <label className="text-xs font-bold">Kunci</label>
                               <select value={formSoal.kunci} onChange={e => setFormSoal({ ...formSoal, kunci: e.target.value })} className="w-full border p-2 rounded text-sm">
-                                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
-                                <option value="E">E</option>
+                                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option>
                               </select>
                             </div>
                             <div><label className="text-xs font-bold">Bobot</label><input required type="number" min="1" value={formSoal.bobot} onChange={e => setFormSoal({ ...formSoal, bobot: e.target.value })} className="w-full border p-2 rounded text-sm" /></div>
                             <div><label className="text-xs font-bold">Status</label><select value={formSoal.status} onChange={e => setFormSoal({ ...formSoal, status: e.target.value })} className="w-full border p-2 rounded text-sm font-bold"><option value="draft">DRAFT</option><option value="publish">PUBLISH</option></select></div>
                           </div>
-                          <button type="submit" disabled={isUploading} className="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700">{isUploading ? "Mengunggah..." : "Simpan Soal"}</button>
+
+                          <div className="flex gap-2">
+                            <button type="submit" disabled={isUploading} className="flex-1 bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition">
+                              {isUploading ? "Mengunggah..." : (editingSoalId ? "Update Soal" : "Simpan Soal")}
+                            </button>
+                            {editingSoalId && (
+                              <button type="button" onClick={handleBatalEdit} className="bg-gray-300 text-gray-700 font-bold px-3 py-2 rounded hover:bg-gray-400 transition text-sm">
+                                Batal
+                              </button>
+                            )}
+                          </div>
                         </form>
 
                         <div className="bg-white p-5 rounded-lg shadow border border-emerald-200 bg-emerald-50 text-center">
@@ -589,6 +654,12 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
                               </div>
                             </div>
                             <div className="flex flex-col gap-2">
+                              <button 
+                                onClick={() => handleEditSoal(soal)} 
+                                className="bg-yellow-50 text-yellow-700 border border-yellow-200 px-3 py-1.5 rounded text-xs font-bold flex items-center justify-center hover:bg-yellow-100 transition shadow-sm"
+                              >
+                                <Edit size={14} className="mr-1" /> Edit
+                              </button>
                               <button onClick={async () => { await supabase.from('soal').update({status: soal.status === 'publish' ? 'draft' : 'publish'}).eq('id', soal.id); fetchData(true); }} className="bg-white border text-gray-700 px-3 py-1.5 rounded text-xs font-bold hover:bg-gray-50 transition shadow-sm">Jadikan {soal.status === 'publish' ? 'Draft' : 'Publish'}</button>
                               <button onClick={() => hapusData('soal', soal.id)} className="bg-red-50 text-red-600 px-3 py-1.5 rounded text-xs font-bold flex items-center justify-center hover:bg-red-100 transition"><Trash2 size={14} className="mr-1"/> Hapus</button>
                             </div>
