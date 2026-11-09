@@ -41,7 +41,7 @@ const DashboardView = ({ currentUser }) => {
   const [formSiswa, setFormSiswa] = useState({ nisn: '', nama: '', kelas: '' });
   const [formMapel, setFormMapel] = useState({ nama: '' });
   const [formPaket, setFormPaket] = useState({ mapel_id: '', kelas_jurusan: '' });
-  const [formSoal, setFormSoal] = useState({ teks: '', a: '', b: '', c: '', d: '', kunci: 'A', bobot: 10, status: 'publish' });
+  const [formSoal, setFormSoal] = useState({ teks: '', a: '', b: '', c: '', d: '', e: '', kunci: 'A', bobot: 10, status: 'publish' });
   const [selectedImage, setSelectedImage] = useState(null);
 
   // --- FILTER ---
@@ -182,9 +182,9 @@ const DashboardView = ({ currentUser }) => {
         await supabase.storage.from('soal-gambar').upload(fileName, selectedImage);
         finalGambarUrl = supabase.storage.from('soal-gambar').getPublicUrl(fileName).data.publicUrl;
       }
-      const { error } = await supabase.from('soal').insert([{ paket_id: selectedPaket.id, mapel_id: selectedPaket.mapel_id, teks_pertanyaan: formSoal.teks, opsi_a: formSoal.a, opsi_b: formSoal.b, opsi_c: formSoal.c, opsi_d: formSoal.d, kunci_jawaban: formSoal.kunci, bobot_nilai: parseInt(formSoal.bobot), gambar_url: finalGambarUrl, status: formSoal.status }]);
+      const { error } = await supabase.from('soal').insert([{ paket_id: selectedPaket.id, mapel_id: selectedPaket.mapel_id, teks_pertanyaan: formSoal.teks, opsi_a: formSoal.a, opsi_b: formSoal.b, opsi_c: formSoal.c, opsi_d: formSoal.d, opsi_e: formSoal.e, kunci_jawaban: formSoal.kunci, bobot_nilai: parseInt(formSoal.bobot), gambar_url: finalGambarUrl, status: formSoal.status }]);
       if (error) throw error;
-      setFormSoal({ ...formSoal, teks: '', a: '', b: '', c: '', d: '' }); setSelectedImage(null); fetchData(true);
+      setFormSoal({ ...formSoal, teks: '', a: '', b: '', c: '', d: '', e: '' }); setSelectedImage(null); fetchData(true);
     } catch (err) { alert(err.message); } finally { setIsUploading(false); }
   };
 
@@ -521,14 +521,21 @@ const DashboardView = ({ currentUser }) => {
                           <h3 className="font-bold text-gray-800 text-lg mb-2 flex items-center"><PlusCircle size={18} className="mr-2 text-blue-600" /> Tulis Soal Manual</h3>
                           <div><label className="text-xs font-bold text-gray-500 block mb-1">PERTANYAAN</label><textarea required rows="3" value={formSoal.teks} onChange={e => setFormSoal({ ...formSoal, teks: e.target.value })} className="w-full p-2 border rounded text-sm outline-none"></textarea></div>
                           <div><label className="text-xs font-bold text-gray-500 block mb-1">GAMBAR (Opsional)</label><input type="file" accept="image/*" onChange={e => setSelectedImage(e.target.files[0])} className="w-full text-xs border p-1 rounded bg-gray-50" /></div>
-                          <div className="grid grid-cols-2 gap-2">
+                         <div className="grid grid-cols-2 gap-2">
                             <input required placeholder="Opsi A" value={formSoal.a} onChange={e => setFormSoal({ ...formSoal, a: e.target.value })} className="border p-2 rounded text-sm" />
                             <input required placeholder="Opsi B" value={formSoal.b} onChange={e => setFormSoal({ ...formSoal, b: e.target.value })} className="border p-2 rounded text-sm" />
                             <input required placeholder="Opsi C" value={formSoal.c} onChange={e => setFormSoal({ ...formSoal, c: e.target.value })} className="border p-2 rounded text-sm" />
                             <input required placeholder="Opsi D" value={formSoal.d} onChange={e => setFormSoal({ ...formSoal, d: e.target.value })} className="border p-2 rounded text-sm" />
+                            <input placeholder="Opsi E (Opsional)" value={formSoal.e} onChange={e => setFormSoal({ ...formSoal, e: e.target.value })} className="border p-2 rounded text-sm col-span-2" />
                           </div>
                           <div className="grid grid-cols-3 gap-2">
-                            <div><label className="text-xs font-bold">Kunci</label><select value={formSoal.kunci} onChange={e => setFormSoal({ ...formSoal, kunci: e.target.value })} className="w-full border p-2 rounded text-sm"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
+                            <div>
+                              <label className="text-xs font-bold">Kunci</label>
+                              <select value={formSoal.kunci} onChange={e => setFormSoal({ ...formSoal, kunci: e.target.value })} className="w-full border p-2 rounded text-sm">
+                                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                                <option value="E">E</option>
+                              </select>
+                            </div>
                             <div><label className="text-xs font-bold">Bobot</label><input required type="number" min="1" value={formSoal.bobot} onChange={e => setFormSoal({ ...formSoal, bobot: e.target.value })} className="w-full border p-2 rounded text-sm" /></div>
                             <div><label className="text-xs font-bold">Status</label><select value={formSoal.status} onChange={e => setFormSoal({ ...formSoal, status: e.target.value })} className="w-full border p-2 rounded text-sm font-bold"><option value="draft">DRAFT</option><option value="publish">PUBLISH</option></select></div>
                           </div>
@@ -572,6 +579,11 @@ const DashboardView = ({ currentUser }) => {
                                 <span className={soal.kunci_jawaban === 'B' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded' : 'px-2'}>B. {soal.opsi_b}</span>
                                 <span className={soal.kunci_jawaban === 'C' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded' : 'px-2'}>C. {soal.opsi_c}</span>
                                 <span className={soal.kunci_jawaban === 'D' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded' : 'px-2'}>D. {soal.opsi_d}</span>
+                                
+                                {/* Ini tambahan untuk render Opsi E */}
+                                {soal.opsi_e && (
+                                  <span className={soal.kunci_jawaban === 'E' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded col-span-2' : 'px-2 col-span-2'}>E. {soal.opsi_e}</span>
+                                )}
                               </div>
                             </div>
                             <div className="flex flex-col gap-2">
@@ -782,7 +794,7 @@ const StudentView = ({ currentUser, currentSesi }) => {
              setRaguRagu(savedData.raguRagu || {});
           } else {
              processedSoal = publishedSoal.sort(() => Math.random() - 0.5).map(soal => ({
-                ...soal, shuffledOptions: ['A', 'B', 'C', 'D'].sort(() => Math.random() - 0.5) 
+                ...soal, shuffledOptions: ['A', 'B', 'C', 'D', 'E'].sort(() => Math.random() - 0.5) 
              }));
           }
           setSoalList(processedSoal);
