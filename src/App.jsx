@@ -1243,14 +1243,37 @@ export default function CBTSystem() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 font-sans">
-      <nav className="bg-gray-900 text-white p-4 flex justify-between items-center shadow-lg z-10 relative">
-        <span className="font-bold flex items-center"><Monitor className="mr-2"/> CBT Online - Portal {currentUser?.role.toUpperCase()}</span>
-        <button onClick={() => { setIsLoggedIn(false); setCurrentUser(null); setCurrentSesi(null); setLoginData({ nisn: '', password: '', token: '' }); }} className="bg-red-600 px-4 py-2 rounded text-sm font-bold hover:bg-red-700 flex items-center transition"><LogOut size={16} className="mr-2" /> Keluar</button>
+    /* 1. CONTAINER UTAMA: h-screen w-screen overflow-hidden agar 100% Full Layar Laptop tanpa double scrollbar */
+    <div className="h-screen w-screen flex flex-col bg-gray-100 font-sans overflow-hidden">
+      
+      {/* 2. NAVBAR/HEADER: Mengubah p-4 menjadi py-2 px-5 agar ramping & tidak terlalu tinggi */}
+      <nav className="bg-gray-900 text-white py-2 px-5 flex justify-between items-center shadow-lg z-10 shrink-0">
+        <span className="font-bold flex items-center text-sm tracking-wide">
+          <Monitor className="mr-2 w-4 h-4 text-blue-400" /> 
+          CBT Online - Portal {currentUser?.role?.toUpperCase()}
+        </span>
+        
+        {/* Tombol Keluar Ramping */}
+        <button 
+          onClick={() => { setIsLoggedIn(false); setCurrentUser(null); setCurrentSesi(null); setLoginData({ nisn: '', password: '', token: '' }); }} 
+          className="bg-red-600 px-3 py-1.5 rounded text-xs font-bold hover:bg-red-700 flex items-center transition shadow-sm"
+        >
+          <LogOut size={14} className="mr-1" /> Keluar
+        </button>
       </nav>
-      <div className="flex-1 overflow-auto bg-gray-100">
-        {currentUser?.role === 'siswa' ? <StudentView currentUser={currentUser} currentSesi={currentSesi} /> : <DashboardView currentUser={currentUser} />}
-        <div className="text-center p-4 text-xs text-gray-400">
+
+      {/* 3. AREA KONTEN UTAMA: Memenuhi sisa ruang dari atas ke bawah */}
+      <div className="flex-1 overflow-auto bg-gray-100 flex flex-col w-full">
+        <div className="flex-1 w-full">
+          {currentUser?.role === 'siswa' ? (
+            <StudentView currentUser={currentUser} currentSesi={currentSesi} />
+          ) : (
+            <DashboardView currentUser={currentUser} />
+          )}
+        </div>
+        
+        {/* Footer Ramping */}
+        <div className="text-center py-2 text-[11px] text-gray-400 shrink-0 border-t border-gray-200 bg-white">
           Copyright © rzwann_m
         </div>
       </div>
