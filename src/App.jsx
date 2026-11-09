@@ -1272,14 +1272,20 @@ export default function CBTSystem() {
         </div>
       </nav>
 
-      {/* AREA KONTEN UTAMA */}
-      <div className="flex-1 overflow-hidden flex w-full">
-        {currentUser?.role === 'siswa' ? (
-          <StudentView currentUser={currentUser} currentSesi={currentSesi} />
-        ) : (
-          <DashboardView currentUser={currentUser} />
-        )}
+      {/* AREA KONTEN UTAMA & FOOTER */}
+      <div className="flex-1 overflow-hidden flex flex-col w-full">
+        <div className="flex-1 overflow-hidden flex w-full">
+          {currentUser?.role === 'siswa' ? (
+            <StudentView currentUser={currentUser} currentSesi={currentSesi} />
+          ) : (
+            <DashboardView currentUser={currentUser} />
+          )}
+        </div>
+        
+        {/* Footer Copyright Kembali! */}
+        <div className="text-center py-2 text-[11px] text-gray-500 shrink-0 border-t border-gray-200 bg-white font-medium">
+          Copyright © rzwann_m
+        </div>
       </div>
     </div>
   );
-}
