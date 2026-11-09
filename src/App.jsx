@@ -259,8 +259,8 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
   };
 
   return (
-    <div className="flex h-full w-full bg-slate-50 overflow-hidden">
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex h-full overflow-y-auto shrink-0">
+    <div className="flex h-full w-full bg-slate-50 relative">
+      <aside className="w-64 flex-none bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex overflow-y-auto pb-4 shrink-0">
         <div>
           <div className="p-6 border-b flex items-center gap-3">
              <img src={logoSekolah} alt="Logo" className="w-10 h-10 object-contain" />
@@ -293,7 +293,7 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
         </div>
       </aside>
 
-      <main className="flex-1 p-6 md:p-8 overflow-y-auto overflow-x-hidden h-full pb-20">
+      <main className="flex-1 min-w-0 overflow-y-auto p-6 md:p-8 pb-10">
         {loading ? (<div className="p-10 text-center font-bold text-gray-500 animate-pulse">Memuat Data Sistem...</div>) : (
           <div className="max-w-6xl mx-auto space-y-6">
             
@@ -1273,8 +1273,8 @@ export default function CBTSystem() {
       </nav>
 
       {/* AREA KONTEN UTAMA & FOOTER */}
-      <div className="flex-1 overflow-hidden flex flex-col w-full">
-        <div className="flex-1 overflow-hidden flex w-full">
+      <div className="flex-1 min-h-0 flex flex-col w-full relative">
+        <div className="flex-1 min-h-0 w-full flex">
           {currentUser?.role === 'siswa' ? (
             <StudentView currentUser={currentUser} currentSesi={currentSesi} />
           ) : (
@@ -1282,8 +1282,8 @@ export default function CBTSystem() {
           )}
         </div>
         
-        {/* Footer Copyright Kembali! */}
-        <div className="text-center py-2 text-[11px] text-gray-500 shrink-0 border-t border-gray-200 bg-white font-medium">
+        {/* Footer Copyright */}
+        <div className="flex-none text-center py-2 text-[11px] text-gray-500 border-t border-gray-200 bg-white font-medium z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.02)]">
           Copyright © rzwann_m
         </div>
       </div>
