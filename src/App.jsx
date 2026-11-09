@@ -499,7 +499,7 @@ const DashboardView = ({ currentUser }) => {
                             <div className="flex-1 pr-4">
                               <div className="flex items-center gap-2 mb-2">
                                 <span className={`text-[10px] px-2 py-0.5 rounded font-black text-white tracking-widest ${soal.status === 'publish' ? 'bg-emerald-500' : 'bg-gray-500'}`}>{soal.status?.toUpperCase()}</span>
-                                <span className="text-xs font-bold text-gray-400">Soal #{soal.id}</span>
+                                <span className="text-xs font-bold text-gray-400">Soal #{i + 1}</span>
                               </div>
                               <p className="font-bold text-gray-800 text-sm mb-3 whitespace-pre-line">{soal.teks_pertanyaan}</p>
                               {soal.gambar_url && <img src={soal.gambar_url} alt="Img" className="max-h-40 mb-4 border rounded-lg p-1 bg-gray-50" />}
