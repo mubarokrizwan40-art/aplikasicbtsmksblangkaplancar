@@ -71,7 +71,8 @@ const DashboardView = ({ currentUser }) => {
 
     if (activeTab === 'soal' || activeTab === 'ruangan') {
       const { data: dPaket } = await supabase.from('paket_ujian').select('*, mata_pelajaran(nama_mapel)').order('id', { ascending: false });
-      const { data: dSoal } = await supabase.from('soal').select('id, paket_id, teks_pertanyaan, gambar_url, opsi_a, opsi_b, opsi_c, opsi_d, opsi_e kunci_jawaban, bobot_nilai, status').order('id', { ascending: false });
+      const { data: dSoal, error: errSoal } = await supabase.from('soal').select('id, paket_id, teks_pertanyaan, gambar_url, opsi_a, opsi_b, opsi_c, opsi_d, opsi_e, kunci_jawaban, bobot_nilai, status').order('id', { ascending: false });
+if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
       if (dPaket) setDaftarPaket(dPaket);
       if (dSoal) setDaftarSoal(dSoal);
     }
@@ -511,7 +512,7 @@ const DashboardView = ({ currentUser }) => {
                       </div>
                       <div className="bg-gray-700 px-5 py-3 rounded-lg text-center">
                          <p className="text-xs text-gray-400 font-bold mb-1">TOTAL SOAL</p>
-                         <p className="text-3xl font-black text-emerald-400">{daftarSoal.filter(s => s.paket_id === selectedPaket.id).length}</p>
+                         <p className="text-3xl font-black text-emerald-400">{daftarSoal.filter(s => s.paket_id == selectedPaket.id).length}</p>
                       </div>
                     </div>
 
