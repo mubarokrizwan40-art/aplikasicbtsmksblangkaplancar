@@ -1245,8 +1245,8 @@ export default function CBTSystem() {
     );
   }
 
-  return (
-    <div className="h-screen w-screen flex flex-col bg-slate-50 font-sans overflow-hidden text-slate-800">
+ return (
+    <div className="h-screen w-screen flex flex-col bg-slate-50 font-sans text-slate-800">
       
       {/* NAVBAR ATAS (Tema Terang / SRMS Style) */}
       <nav className="h-16 bg-white border-b border-slate-200 px-6 flex justify-between items-center z-20 shrink-0 shadow-sm">
