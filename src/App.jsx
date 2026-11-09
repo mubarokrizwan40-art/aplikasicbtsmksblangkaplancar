@@ -556,7 +556,7 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
                                   opsi_b: String(row.B || row.b || ''),
                                   opsi_c: String(row.C || row.c || ''),
                                   opsi_d: String(row.D || row.d || ''),
-                                  opsi_e: String(row.E || row.d || ''),
+                                  opsi_e: String(row.E || row.e || ''),
                                   kunci_jawaban: String(row.Kunci || row.kunci || 'A'),
                                   bobot_nilai: Number(row.Bobot || row.bobot || 10),
                                   status: 'publish'
