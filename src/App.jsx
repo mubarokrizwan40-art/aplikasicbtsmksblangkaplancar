@@ -327,7 +327,7 @@ const DashboardView = ({ currentUser }) => {
               </div>
             )}
 
-            {/* SISWA */}
+{/* SISWA */}
             {activeTab === 'siswa' && (isAdmin || isGuru) && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -349,11 +349,74 @@ const DashboardView = ({ currentUser }) => {
                     </label>
                   </div>
                 </div>
+                
+                {/* TABEL SISWA DENGAN FILTER KELAS */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                  <table className="w-full text-left text-sm">
-                    <thead><tr className="bg-gray-100"><th className="p-3 font-semibold">NISN</th><th className="p-3 font-semibold">Nama Lengkap</th><th className="p-3 font-semibold">Kelas</th><th className="p-3 font-semibold">Hapus</th></tr></thead>
-                    <tbody>{daftarSiswa.map(s => <tr key={s.id} className="border-b"><td className="p-3 font-mono">{s.nisn_nip}</td><td className="p-3">{s.nama_lengkap}</td><td className="p-3">{s.kelas}</td><td className="p-3"><button onClick={()=>hapusData('users', s.id)}><Trash2 size={16} className="text-red-500"/></button></td></tr>)}</tbody>
-                  </table>
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                    <h3 className="font-bold text-lg text-gray-800">Daftar Siswa Terdaftar</h3>
+                    
+                    {/* Dropdown Filter Kelas */}
+                    <div className="flex items-center gap-2 w-full md:w-auto">
+                      <label className="text-xs font-bold text-gray-500 whitespace-nowrap">Filter Kelas:</label>
+                      <select 
+                        className="w-full md:w-48 border p-2 rounded text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-emerald-500"
+                        value={filterKelasSiswa}
+                        onChange={(e) => setFilterKelasSiswa(e.target.value)}
+                      >
+                        <option value="">Semua Kelas</option>
+                        {/* Mengambil daftar kelas unik dari data siswa */}
+                        {[...new Set(daftarSiswa.map(s => s.kelas))].filter(Boolean).sort().map(kelas => (
+                          <option key={kelas} value={kelas}>{kelas}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="p-3 font-semibold">NISN</th>
+                          <th className="p-3 font-semibold">Nama Lengkap</th>
+                          <th className="p-3 font-semibold">Kelas</th>
+                          <th className="p-3 font-semibold text-center">Hapus</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {daftarSiswa
+                          .filter(s => filterKelasSiswa === '' || s.kelas === filterKelasSiswa)
+                          .map(s => (
+                          <tr key={s.id} className="border-b hover:bg-gray-50 transition">
+                            <td className="p-3 font-mono text-gray-600">{s.nisn_nip}</td>
+                            <td className="p-3 font-bold">{s.nama_lengkap}</td>
+                            <td className="p-3">
+                              <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">
+                                {s.kelas}
+                              </span>
+                            </td>
+                            <td className="p-3 text-center">
+                              <button 
+                                onClick={() => hapusData('users', s.id)}
+                                className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition"
+                                title="Hapus Siswa"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        
+                        {/* Pesan jika data kosong setelah difilter */}
+                        {daftarSiswa.filter(s => filterKelasSiswa === '' || s.kelas === filterKelasSiswa).length === 0 && (
+                          <tr>
+                            <td colSpan="4" className="p-8 text-center text-gray-500 font-medium">
+                              Tidak ada siswa yang ditemukan di kelas ini.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
