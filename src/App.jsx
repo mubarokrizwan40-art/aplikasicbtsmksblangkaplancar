@@ -259,8 +259,8 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <aside className="w-64 bg-white border-r shadow-sm flex flex-col justify-between hidden md:flex">
+    <div className="flex h-full w-full bg-slate-50 overflow-hidden">
+      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex h-full overflow-y-auto shrink-0">
         <div>
           <div className="p-6 border-b flex items-center gap-3">
              <img src={logoSekolah} alt="Logo" className="w-10 h-10 object-contain" />
@@ -293,7 +293,7 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
         </div>
       </aside>
 
-      <main className="flex-1 p-6 md:p-8 overflow-y-auto h-screen">
+      <main className="flex-1 p-6 md:p-8 overflow-y-auto overflow-x-hidden h-full pb-20">
         {loading ? (<div className="p-10 text-center font-bold text-gray-500 animate-pulse">Memuat Data Sistem...</div>) : (
           <div className="max-w-6xl mx-auto space-y-6">
             
