@@ -259,41 +259,44 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
   };
 
   return (
-    <div className="flex h-full w-full bg-slate-50 relative">
-      <aside className="w-64 flex-none bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex overflow-y-auto pb-4 shrink-0">
-        <div>
+    <div className="flex h-full w-full bg-slate-50 overflow-hidden">
+      
+      {/* SIDEBAR: Ditambah h-full dan overflow-y-auto agar menu bawah bisa digulir */}
+      <aside className="w-64 flex-none bg-white border-r border-slate-200 hidden md:flex flex-col h-full overflow-y-auto">
+        <div className="pb-10">
           <div className="p-6 border-b flex items-center gap-3">
              <img src={logoSekolah} alt="Logo" className="w-10 h-10 object-contain" />
              <div>
                 <h2 className="font-bold text-gray-800 leading-tight">{isAdmin ? 'Admin Panel' : (isGuru ? 'Panel Guru' : 'Panel Pengawas')}</h2>
-                <p className="text-xs text-emerald-600 font-bold uppercase">{currentUser?.role}</p>
+                <p className="text-xs text-sky-600 font-bold uppercase">{currentUser?.role}</p>
              </div>
           </div>
           <div className="p-4 space-y-1">
             {isAdmin && (
               <>
                 <p className="text-[10px] font-bold text-gray-400 mt-2 mb-1 px-4">KONTROL SISTEM</p>
-                <button onClick={() => setActiveTab('ruangan')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'ruangan' ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-100'}`}><LayoutDashboard size={18} /> Command Center</button>
-                <button onClick={() => setActiveTab('user')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'user' ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-100'}`}><UserCog size={18} /> Manajemen Staff</button>
+                <button onClick={() => setActiveTab('ruangan')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'ruangan' ? 'bg-sky-50 text-sky-700' : 'text-gray-600 hover:bg-gray-100'}`}><LayoutDashboard size={18} /> Command Center</button>
+                <button onClick={() => setActiveTab('user')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'user' ? 'bg-sky-50 text-sky-700' : 'text-gray-600 hover:bg-gray-100'}`}><UserCog size={18} /> Manajemen Staff</button>
               </>
             )}
             {(isAdmin || isGuru) && (
               <>
                 <p className="text-[10px] font-bold text-gray-400 mt-4 mb-1 px-4">DATA AKADEMIK</p>
-                <button onClick={() => setActiveTab('siswa')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'siswa' ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-100'}`}><Users size={18} /> Data Siswa</button>
-                <button onClick={() => setActiveTab('mapel')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'mapel' ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-100'}`}><Book size={18} /> Mata Pelajaran</button>
-                <button onClick={() => {setActiveTab('soal'); setViewPaket('list');}} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'soal' ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-100'}`}><BookOpen size={18} /> Bank Soal</button>
-                <button onClick={() => setActiveTab('analisis')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'analisis' ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-100'}`}><BarChart size={18} /> Analisis Soal</button>
+                <button onClick={() => setActiveTab('siswa')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'siswa' ? 'bg-sky-50 text-sky-700' : 'text-gray-600 hover:bg-gray-100'}`}><Users size={18} /> Data Siswa</button>
+                <button onClick={() => setActiveTab('mapel')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'mapel' ? 'bg-sky-50 text-sky-700' : 'text-gray-600 hover:bg-gray-100'}`}><Book size={18} /> Mata Pelajaran</button>
+                <button onClick={() => {setActiveTab('soal'); setViewPaket('list');}} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'soal' ? 'bg-sky-50 text-sky-700' : 'text-gray-600 hover:bg-gray-100'}`}><BookOpen size={18} /> Bank Soal</button>
+                <button onClick={() => setActiveTab('analisis')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'analisis' ? 'bg-sky-50 text-sky-700' : 'text-gray-600 hover:bg-gray-100'}`}><BarChart size={18} /> Analisis Soal</button>
               </>
             )}
             <p className="text-[10px] font-bold text-gray-400 mt-4 mb-1 px-4">EVALUASI UJIAN</p>
             <button onClick={() => setActiveTab('monitoring')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'monitoring' ? 'bg-red-50 text-red-700' : 'text-gray-600 hover:bg-gray-100'}`}><Activity size={18} /> Live Monitoring</button>
-            <button onClick={() => setActiveTab('nilai')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'nilai' ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-100'}`}><ClipboardList size={18} /> Rekap Nilai</button>
+            <button onClick={() => setActiveTab('nilai')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'nilai' ? 'bg-sky-50 text-sky-700' : 'text-gray-600 hover:bg-gray-100'}`}><ClipboardList size={18} /> Rekap Nilai</button>
           </div>
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 overflow-y-auto p-6 md:p-8 pb-10">
+      {/* AREA UTAMA */}
+      <main className="flex-1 min-w-0 h-full overflow-y-auto p-6 md:p-8 pb-10">
         {loading ? (<div className="p-10 text-center font-bold text-gray-500 animate-pulse">Memuat Data Sistem...</div>) : (
           <div className="max-w-6xl mx-auto space-y-6">
             
