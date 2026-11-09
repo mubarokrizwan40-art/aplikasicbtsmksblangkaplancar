@@ -551,12 +551,12 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
                               onChange={(e) => uploadExcel(e, 'soal', row => ({
                                   paket_id: selectedPaket.id,
                                   mapel_id: selectedPaket.mapel_id,
-                                  teks_pertanyaan: String(row.Pertanyaan || row.pertanyaan || ''),
-                                  opsi_a: String(row.A || row.a || ''),
-                                  opsi_b: String(row.B || row.b || ''),
-                                  opsi_c: String(row.C || row.c || ''),
-                                  opsi_d: String(row.D || row.d || ''),
-                                  opsi_e: String(row.E || row.e || ''),
+                                  teks_pertanyaan: String(row.teks_pertanyaan || row.Pertanyaan || row.pertanyaan || ''),
+                                  opsi_a: String(row.opsi_a || row.A || row.a || ''),
+                                  opsi_b: String(row.opsi_b || row.B || row.b || ''),
+                                  opsi_c: String(row.opsi_c || row.C || row.c || ''),
+                                  opsi_d: String(row.opsi_d || row.D || row.d || ''),
+                                  opsi_e: String(row.opsi_e || row.E || row.e || ''),
                                   kunci_jawaban: String(row.Kunci || row.kunci || 'A'),
                                   bobot_nilai: Number(row.Bobot || row.bobot || 10),
                                   status: 'publish'
