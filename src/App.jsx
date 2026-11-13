@@ -73,7 +73,7 @@ const DashboardView = ({ currentUser }) => {
     if (activeTab === 'soal' || activeTab === 'ruangan') {
       const { data: dPaket } = await supabase.from('paket_ujian').select('*, mata_pelajaran(nama_mapel)').order('id', { ascending: false });
       const { data: dSoal, error: errSoal } = await supabase.from('soal').select('id, paket_id, teks_pertanyaan, gambar_url, opsi_a, opsi_b, opsi_c, opsi_d, opsi_e, kunci_jawaban, bobot_nilai, status').order('id', { ascending: false });
-if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
+      if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
       if (dPaket) setDaftarPaket(dPaket);
       if (dSoal) setDaftarSoal(dSoal);
     }
@@ -107,20 +107,17 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
       }
     }
 
-    // --- FETCH LIVE MONITORING & LOG PELANGGARAN ---
     if (activeTab === 'monitoring') {
       let queryLog = supabase.from('log_pelanggaran').select(`id, waktu, keterangan, users (nama_lengkap, kelas), sesi_ujian (pengawas_id, ruangan(nama_ruangan))`).order('waktu', { ascending: false });
       let queryAkt = supabase.from('aktivitas_ujian').select(`id, status, waktu_mulai, users (nama_lengkap, kelas), sesi_ujian (pengawas_id, ruangan(nama_ruangan))`).order('waktu_mulai', { ascending: false });
       
       if (!isAdmin) {
-         // Jika bukan admin, hanya ambil data dari ruangan yang diawasi oleh akun ini
          queryLog = queryLog.eq('sesi_ujian.pengawas_id', currentUser.id);
          queryAkt = queryAkt.eq('sesi_ujian.pengawas_id', currentUser.id);
       }
 
       const [resLog, resAkt] = await Promise.all([queryLog, queryAkt]);
       
-      // Filter null relation jika RLS/Inner join supabase bertingkah
       if (resLog.data) setLogPelanggaran(resLog.data.filter(d => isAdmin || d.sesi_ujian !== null));
       if (resAkt.data) setAktivitasSiswa(resAkt.data.filter(d => isAdmin || d.sesi_ujian !== null));
     }
@@ -207,7 +204,6 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
       }
 
       if (editingSoalId) {
-        // PROSES UPDATE
         const updatePayload = {
           teks_pertanyaan: formSoal.teks,
           opsi_a: formSoal.a,
@@ -225,7 +221,6 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
         if (error) throw error;
         setEditingSoalId(null);
       } else {
-        // PROSES SIMPAN BARU
         const { error } = await supabase.from('soal').insert([{ 
           paket_id: selectedPaket.id, 
           mapel_id: selectedPaket.mapel_id, 
@@ -259,10 +254,10 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
   };
 
   return (
-    <div className="flex h-full w-full bg-slate-50 overflow-hidden">
-      {/* SIDEBAR TERPISAH: Punya scroll sendiri (overflow-y-auto) */}
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex h-full overflow-y-auto shrink-0 pb-10">
-        <div>
+    <div className="flex h-full w-full bg-slate-50 relative">
+      {/* SIDEBAR TERPISAH (BLOCK LAYOUT) */}
+      <aside className="w-64 bg-white border-r border-slate-200 hidden md:block h-full overflow-y-auto shrink-0 z-10 shadow-[2px_0_8px_rgba(0,0,0,0.02)]">
+        <div className="pb-16">
           <div className="p-6 border-b flex items-center gap-3">
              <img src={logoSekolah} alt="Logo" className="w-10 h-10 object-contain" />
              <div>
@@ -294,518 +289,494 @@ if (errSoal) alert("Penyebab Soal Kosong: " + errSoal.message);
         </div>
       </aside>
 
-      {/* KONTEN UTAMA TERPISAH: Punya scroll sendiri (overflow-y-auto) */}
-      <main className="flex-1 h-full overflow-y-auto p-6 md:p-8 pb-16 bg-slate-50">
-        {loading ? (<div className="p-10 text-center font-bold text-gray-500 animate-pulse">Memuat Data Sistem...</div>) : (
-          <div className="max-w-6xl mx-auto space-y-6">
-            
-            {/* COMMAND CENTER */}
-            {activeTab === 'ruangan' && isAdmin && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <div><h2 className="text-2xl font-black text-gray-800">Command Center Ruangan</h2></div>
-                    <form onSubmit={handleTambahRuangan} className="flex gap-2 bg-gray-50 p-2 rounded-lg border">
-                      <input required placeholder="Cth: Ruang Laboratorium 1" className="border p-2 text-sm rounded outline-none w-56" value={formRuangan.nama} onChange={e => setFormRuangan({nama: e.target.value})} />
-                      <button type="submit" className="bg-emerald-600 text-white px-4 py-2 rounded font-bold text-sm hover:bg-emerald-700"><PlusCircle size={16}/></button>
-                    </form>
-                </div>
+      {/* KONTEN UTAMA TERPISAH DENGAN PADDING DI ELEMEN ANAK */}
+      <main className="flex-1 min-w-0 h-full overflow-y-auto bg-slate-50">
+        <div className="p-6 md:p-8 pb-24 max-w-6xl mx-auto space-y-6">
+          {loading ? (<div className="p-10 text-center font-bold text-gray-500 animate-pulse">Memuat Data Sistem...</div>) : (
+            <>
+              {/* COMMAND CENTER */}
+              {activeTab === 'ruangan' && isAdmin && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                      <div><h2 className="text-2xl font-black text-gray-800">Command Center Ruangan</h2></div>
+                      <form onSubmit={handleTambahRuangan} className="flex gap-2 bg-gray-50 p-2 rounded-lg border">
+                        <input required placeholder="Cth: Ruang Laboratorium 1" className="border p-2 text-sm rounded outline-none w-56" value={formRuangan.nama} onChange={e => setFormRuangan({nama: e.target.value})} />
+                        <button type="submit" className="bg-emerald-600 text-white px-4 py-2 rounded font-bold text-sm hover:bg-emerald-700"><PlusCircle size={16}/></button>
+                      </form>
+                  </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {semuaRuangan.map((ruang) => {
-                    const sesi = ruang.sesi_ujian?.[0] || { id: null, token_ujian: '-', status: 'belum_mulai', pengawas_id: null, paket_id: null, durasi_menit: 90 };
-                    return (
-                      <div key={ruang.id} className={`p-5 border-2 rounded-xl shadow-sm transition ${sesi.status === 'berjalan' ? 'border-emerald-500 bg-emerald-50/30' : 'border-gray-200 bg-white'}`}>
-                        <div className="flex justify-between items-center mb-2">
-                           <h3 className="font-bold text-lg text-gray-800">{ruang.nama_ruangan}</h3>
-                           <div className="flex items-center gap-2">
-                             {sesi.status === 'berjalan' && <span className="bg-emerald-500 text-white text-[10px] px-2 py-1 rounded font-bold animate-pulse">Berjalan</span>}
-                             <button onClick={() => hapusData('ruangan', ruang.id)} className="text-gray-400 hover:text-red-500 transition"><Trash2 size={16}/></button>
-                           </div>
-                        </div>
-                        <div className="bg-gray-900 text-yellow-400 text-2xl font-black py-4 text-center rounded-lg mb-4 font-mono tracking-widest">{sesi.token_ujian}</div>
-                        
-                        <div className="mb-3">
-                            <label className="text-xs font-bold text-gray-500 mb-1 block">DATA UJIAN (PAKET SOAL)</label>
-                            <select className="w-full border p-2 text-sm rounded bg-white outline-none" value={sesi.paket_id || ''} onChange={(e) => assignAtributSesi(ruang.id, sesi.id, 'paket_id', e.target.value)}>
-                              <option value="">-- Pilih Paket Ujian --</option>{daftarPaket.filter(p => p.status_ujian === 'Aktif').map(p => <option key={p.id} value={p.id}>{p.mata_pelajaran?.nama_mapel} - {p.kelas_jurusan}</option>)}
-                            </select>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 mb-4">
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 mb-1 block">PENGAWAS</label>
-                            <select className="w-full border p-2 text-sm rounded bg-white outline-none" value={sesi.pengawas_id || ''} onChange={(e) => assignAtributSesi(ruang.id, sesi.id, 'pengawas_id', e.target.value)}>
-                              <option value="">- Kosong -</option>{daftarGuru.filter(g => g.role === 'pengawas' || g.role === 'guru').map(g => <option key={g.id} value={g.id}>{g.nama_lengkap}</option>)}
-                            </select>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {semuaRuangan.map((ruang) => {
+                      const sesi = ruang.sesi_ujian?.[0] || { id: null, token_ujian: '-', status: 'belum_mulai', pengawas_id: null, paket_id: null, durasi_menit: 90 };
+                      return (
+                        <div key={ruang.id} className={`p-5 border-2 rounded-xl shadow-sm transition ${sesi.status === 'berjalan' ? 'border-emerald-500 bg-emerald-50/30' : 'border-gray-200 bg-white'}`}>
+                          <div className="flex justify-between items-center mb-2">
+                             <h3 className="font-bold text-lg text-gray-800">{ruang.nama_ruangan}</h3>
+                             <div className="flex items-center gap-2">
+                               {sesi.status === 'berjalan' && <span className="bg-emerald-500 text-white text-[10px] px-2 py-1 rounded font-bold animate-pulse">Berjalan</span>}
+                               <button onClick={() => hapusData('ruangan', ruang.id)} className="text-gray-400 hover:text-red-500 transition"><Trash2 size={16}/></button>
+                             </div>
                           </div>
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 mb-1 block">DURASI (MENIT)</label>
-                            <input key={`durasi-${sesi.id}`} type="number" className="w-full border p-2 text-sm rounded bg-white outline-none" defaultValue={sesi.durasi_menit || ''} onBlur={(e) => { if (e.target.value && e.target.value != sesi.durasi_menit) assignAtributSesi(ruang.id, sesi.id, 'durasi_menit', e.target.value); }} placeholder="90" />
+                          <div className="bg-gray-900 text-yellow-400 text-2xl font-black py-4 text-center rounded-lg mb-4 font-mono tracking-widest">{sesi.token_ujian}</div>
+                          
+                          <div className="mb-3">
+                              <label className="text-xs font-bold text-gray-500 mb-1 block">DATA UJIAN (PAKET SOAL)</label>
+                              <select className="w-full border p-2 text-sm rounded bg-white outline-none" value={sesi.paket_id || ''} onChange={(e) => assignAtributSesi(ruang.id, sesi.id, 'paket_id', e.target.value)}>
+                                <option value="">-- Pilih Paket Ujian --</option>{daftarPaket.filter(p => p.status_ujian === 'Aktif').map(p => <option key={p.id} value={p.id}>{p.mata_pelajaran?.nama_mapel} - {p.kelas_jurusan}</option>)}
+                              </select>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 mb-4">
+                            <div>
+                              <label className="text-xs font-bold text-gray-500 mb-1 block">PENGAWAS</label>
+                              <select className="w-full border p-2 text-sm rounded bg-white outline-none" value={sesi.pengawas_id || ''} onChange={(e) => assignAtributSesi(ruang.id, sesi.id, 'pengawas_id', e.target.value)}>
+                                <option value="">- Kosong -</option>{daftarGuru.filter(g => g.role === 'pengawas' || g.role === 'guru').map(g => <option key={g.id} value={g.id}>{g.nama_lengkap}</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold text-gray-500 mb-1 block">DURASI (MENIT)</label>
+                              <input key={`durasi-${sesi.id}`} type="number" className="w-full border p-2 text-sm rounded bg-white outline-none" defaultValue={sesi.durasi_menit || ''} onBlur={(e) => { if (e.target.value && e.target.value != sesi.durasi_menit) assignAtributSesi(ruang.id, sesi.id, 'durasi_menit', e.target.value); }} placeholder="90" />
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => generateToken(ruang.id, sesi.id)} className="flex-1 bg-blue-600 text-white py-2 rounded font-bold text-sm hover:bg-blue-700">Token</button>
+                            <button onClick={() => toggleStatus(ruang.id, sesi.id, sesi.status, sesi.paket_id)} className={`flex-1 py-2 rounded font-bold text-sm text-white ${sesi.status === 'berjalan' ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}>{sesi.status === 'berjalan' ? 'Tutup' : 'Mulai Ujian'}</button>
                           </div>
                         </div>
-                        <div className="flex gap-2">
-                          <button onClick={() => generateToken(ruang.id, sesi.id)} className="flex-1 bg-blue-600 text-white py-2 rounded font-bold text-sm hover:bg-blue-700">Token</button>
-                          <button onClick={() => toggleStatus(ruang.id, sesi.id, sesi.status, sesi.paket_id)} className={`flex-1 py-2 rounded font-bold text-sm text-white ${sesi.status === 'berjalan' ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}>{sesi.status === 'berjalan' ? 'Tutup' : 'Mulai Ujian'}</button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* MANAJEMEN USER */}
-            {activeTab === 'user' && isAdmin && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit">
-                  <h3 className="font-bold text-lg mb-4 text-gray-800">Tambah Staff Baru</h3>
-                  <form onSubmit={tambahUser} className="space-y-4">
-                    <div><label className="text-xs font-bold text-gray-500 mb-1 block">NIP / USERNAME</label><input required className="w-full border p-2 rounded text-sm" value={formUser.nisn} onChange={e => setFormUser({...formUser, nisn: e.target.value})} /></div>
-                    <div><label className="text-xs font-bold text-gray-500 mb-1 block">NAMA LENGKAP</label><input required className="w-full border p-2 rounded text-sm" value={formUser.nama} onChange={e => setFormUser({...formUser, nama: e.target.value})} /></div>
-                    <div><label className="text-xs font-bold text-gray-500 mb-1 block">PERAN</label><select className="w-full border p-2 rounded text-sm" value={formUser.role} onChange={e => setFormUser({...formUser, role: e.target.value})}><option value="guru">Guru Mapel</option><option value="pengawas">Pengawas Ruangan</option><option value="admin">Admin / Proktor</option></select></div>
-                    <button type="submit" className="w-full bg-emerald-600 text-white rounded font-bold py-2 hover:bg-emerald-700">Simpan Akun</button>
-                  </form>
-                </div>
-                <div className="md:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                  <table className="w-full text-left text-sm">
-                    <thead><tr className="bg-gray-100"><th className="p-3">NIP</th><th className="p-3">Nama</th><th className="p-3">Role</th><th className="p-3">Hapus</th></tr></thead>
-                    <tbody>{daftarGuru.map((g) => (<tr key={g.id} className="border-b hover:bg-gray-50"><td className="p-3 font-mono">{g.nisn_nip}</td><td className="p-3 font-medium">{g.nama_lengkap}</td><td className="p-3"><span className="px-2 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-700">{g.role.toUpperCase()}</span></td><td className="p-3"><button onClick={()=>hapusData('users', g.id)}><Trash2 size={16} className="text-red-500"/></button></td></tr>))}</tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-{/* SISWA */}
-            {activeTab === 'siswa' && (isAdmin || isGuru) && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h3 className="font-bold text-lg mb-4 text-gray-800">Registrasi Siswa Manual</h3>
-                    <form onSubmit={handleTambahSiswa} className="space-y-3">
-                      <div><label className="text-xs font-bold text-gray-500 block">NISN</label><input required className="w-full border p-2 rounded text-sm" value={formSiswa.nisn} onChange={e => setFormSiswa({...formSiswa, nisn: e.target.value})} /></div>
-                      <div><label className="text-xs font-bold text-gray-500 block">NAMA LENGKAP</label><input required className="w-full border p-2 rounded text-sm" value={formSiswa.nama} onChange={e => setFormSiswa({...formSiswa, nama: e.target.value})} /></div>
-                      <div><label className="text-xs font-bold text-gray-500 block">KELAS</label><input required placeholder="Cth: XII IPA 1" className="w-full border p-2 rounded text-sm" value={formSiswa.kelas} onChange={e => setFormSiswa({...formSiswa, kelas: e.target.value})} /></div>
-                      <button type="submit" className="w-full bg-emerald-600 text-white rounded font-bold py-2 hover:bg-emerald-700">Simpan Siswa</button>
+              {/* MANAJEMEN USER */}
+              {activeTab === 'user' && isAdmin && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="md:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit">
+                    <h3 className="font-bold text-lg mb-4 text-gray-800">Tambah Staff Baru</h3>
+                    <form onSubmit={tambahUser} className="space-y-4">
+                      <div><label className="text-xs font-bold text-gray-500 mb-1 block">NIP / USERNAME</label><input required className="w-full border p-2 rounded text-sm" value={formUser.nisn} onChange={e => setFormUser({...formUser, nisn: e.target.value})} /></div>
+                      <div><label className="text-xs font-bold text-gray-500 mb-1 block">NAMA LENGKAP</label><input required className="w-full border p-2 rounded text-sm" value={formUser.nama} onChange={e => setFormUser({...formUser, nama: e.target.value})} /></div>
+                      <div><label className="text-xs font-bold text-gray-500 mb-1 block">PERAN</label><select className="w-full border p-2 rounded text-sm" value={formUser.role} onChange={e => setFormUser({...formUser, role: e.target.value})}><option value="guru">Guru Mapel</option><option value="pengawas">Pengawas Ruangan</option><option value="admin">Admin / Proktor</option></select></div>
+                      <button type="submit" className="w-full bg-emerald-600 text-white rounded font-bold py-2 hover:bg-emerald-700">Simpan Akun</button>
                     </form>
                   </div>
-                  <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-200 bg-blue-50 flex flex-col justify-center items-center text-center">
-                    <FileSpreadsheet className="w-16 h-16 text-blue-600 mb-4" />
-                    <h3 className="font-bold text-lg text-blue-900 mb-2">Import Massal Siswa</h3>
-                    <label className={`w-full ${isUploading ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'} text-white font-bold py-2.5 px-4 rounded cursor-pointer`}>
-                      {isUploading ? "Mengimpor..." : "Upload Excel (NISN, Nama, Kelas)"}
-                      <input type="file" accept=".xlsx, .xls, .csv" className="hidden" disabled={isUploading} onChange={(e) => uploadExcel(e, 'users', row => row.NISN || row.nisn ? ({nisn_nip: String(row.NISN || row.nisn), nama_lengkap: String(row.Nama||row.nama||''), kelas: String(row.Kelas||row.kelas||''), password_text: String(row.NISN || row.nisn), role: 'siswa'}) : null)} />
-                    </label>
-                  </div>
-                </div>
-                
-                {/* TABEL SISWA DENGAN FILTER KELAS */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-                    <h3 className="font-bold text-lg text-gray-800">Daftar Siswa Terdaftar</h3>
-                    
-                    {/* Dropdown Filter Kelas */}
-                    <div className="flex items-center gap-2 w-full md:w-auto">
-                      <label className="text-xs font-bold text-gray-500 whitespace-nowrap">Filter Kelas:</label>
-                      <select 
-                        className="w-full md:w-48 border p-2 rounded text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-emerald-500"
-                        value={filterKelasSiswa}
-                        onChange={(e) => setFilterKelasSiswa(e.target.value)}
-                      >
-                        <option value="">Semua Kelas</option>
-                        {/* Mengambil daftar kelas unik dari data siswa */}
-                        {[...new Set(daftarSiswa.map(s => s.kelas))].filter(Boolean).sort().map(kelas => (
-                          <option key={kelas} value={kelas}>{kelas}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="overflow-x-auto">
+                  <div className="md:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                     <table className="w-full text-left text-sm">
-                      <thead>
-                        <tr className="bg-gray-100">
-                          <th className="p-3 font-semibold">NISN</th>
-                          <th className="p-3 font-semibold">Nama Lengkap</th>
-                          <th className="p-3 font-semibold">Kelas</th>
-                          <th className="p-3 font-semibold text-center">Hapus</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {daftarSiswa
-                          .filter(s => filterKelasSiswa === '' || s.kelas === filterKelasSiswa)
-                          .map(s => (
-                          <tr key={s.id} className="border-b hover:bg-gray-50 transition">
-                            <td className="p-3 font-mono text-gray-600">{s.nisn_nip}</td>
-                            <td className="p-3 font-bold">{s.nama_lengkap}</td>
-                            <td className="p-3">
-                              <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">
-                                {s.kelas}
-                              </span>
-                            </td>
-                            <td className="p-3 text-center">
-                              <button 
-                                onClick={() => hapusData('users', s.id)}
-                                className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition"
-                                title="Hapus Siswa"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                        
-                        {/* Pesan jika data kosong setelah difilter */}
-                        {daftarSiswa.filter(s => filterKelasSiswa === '' || s.kelas === filterKelasSiswa).length === 0 && (
-                          <tr>
-                            <td colSpan="4" className="p-8 text-center text-gray-500 font-medium">
-                              Tidak ada siswa yang ditemukan di kelas ini.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
+                      <thead><tr className="bg-gray-100"><th className="p-3">NIP</th><th className="p-3">Nama</th><th className="p-3">Role</th><th className="p-3">Hapus</th></tr></thead>
+                      <tbody>{daftarGuru.map((g) => (<tr key={g.id} className="border-b hover:bg-gray-50"><td className="p-3 font-mono">{g.nisn_nip}</td><td className="p-3 font-medium">{g.nama_lengkap}</td><td className="p-3"><span className="px-2 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-700">{g.role.toUpperCase()}</span></td><td className="p-3"><button onClick={()=>hapusData('users', g.id)}><Trash2 size={16} className="text-red-500"/></button></td></tr>))}</tbody>
                     </table>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* MAPEL */}
-            {activeTab === 'mapel' && (isAdmin || isGuru) && (
-              <div className="space-y-6">
-                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 w-full md:w-1/2">
-                    <h3 className="font-bold text-lg mb-4 text-gray-800">Tambah Mata Pelajaran</h3>
-                    <form onSubmit={handleTambahMapel} className="flex gap-2">
-                      <input required placeholder="Cth: Matematika Wajib" className="flex-1 border p-2 rounded text-sm outline-none" value={formMapel.nama} onChange={e => setFormMapel({nama: e.target.value})} />
-                      <button type="submit" className="bg-blue-600 text-white px-6 rounded font-bold text-sm">Tambah</button>
-                    </form>
-                 </div>
-                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 w-full md:w-1/2">
-                    <table className="w-full text-left text-sm">
-                      <thead><tr className="bg-gray-100"><th className="p-3 font-semibold">Nama Mata Pelajaran</th><th className="p-3 font-semibold text-right">Aksi</th></tr></thead>
-                      <tbody>{daftarMapel.map(m => <tr key={m.id} className="border-b"><td className="p-3">{m.nama_mapel}</td><td className="p-3 text-right"><button onClick={()=>hapusData('mata_pelajaran', m.id)}><Trash2 size={16} className="text-red-500"/></button></td></tr>)}</tbody>
-                    </table>
-                 </div>
-              </div>
-            )}
-
-            {/* BANK SOAL (MASTER - DETAIL VIEW) */}
-            {activeTab === 'soal' && (isAdmin || isGuru) && (
-              <div className="space-y-6">
-                
-                {viewPaket === 'list' && (
-                  <>
+              {/* SISWA */}
+              {activeTab === 'siswa' && (isAdmin || isGuru) && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                      <h3 className="font-bold text-xl mb-4 text-gray-800">Tambah Data Ujian Baru</h3>
-                      <form onSubmit={handleTambahPaket} className="flex items-end gap-4">
-                        <div className="flex-1">
-                          <label className="text-xs font-bold text-gray-500 block mb-1">MATA PELAJARAN</label>
-                          <select required className="w-full border p-2.5 rounded outline-none" value={formPaket.mapel_id} onChange={e=>setFormPaket({...formPaket, mapel_id: e.target.value})}>
-                            <option value="">- Pilih Mapel -</option>
-                            {daftarMapel.map(m=><option key={m.id} value={m.id}>{m.nama_mapel}</option>)}
-                          </select>
-                        </div>
-                        <div className="flex-1">
-                          <label className="text-xs font-bold text-gray-500 block mb-1">KELAS / JURUSAN</label>
-                          <select required className="w-full border p-2.5 rounded outline-none" value={formPaket.kelas_jurusan} onChange={e=>setFormPaket({...formPaket, kelas_jurusan: e.target.value})}>
-                            <option value="">- Pilih Kelas -</option>
-                            {[...new Set(daftarSiswa.map(s => s.kelas))].filter(Boolean).map(k => (
-                              <option key={k} value={k}>{k}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <button type="submit" className="bg-blue-600 text-white px-6 py-2.5 rounded font-bold hover:bg-blue-700">Buat Paket</button>
+                      <h3 className="font-bold text-lg mb-4 text-gray-800">Registrasi Siswa Manual</h3>
+                      <form onSubmit={handleTambahSiswa} className="space-y-3">
+                        <div><label className="text-xs font-bold text-gray-500 block">NISN</label><input required className="w-full border p-2 rounded text-sm" value={formSiswa.nisn} onChange={e => setFormSiswa({...formSiswa, nisn: e.target.value})} /></div>
+                        <div><label className="text-xs font-bold text-gray-500 block">NAMA LENGKAP</label><input required className="w-full border p-2 rounded text-sm" value={formSiswa.nama} onChange={e => setFormSiswa({...formSiswa, nama: e.target.value})} /></div>
+                        <div><label className="text-xs font-bold text-gray-500 block">KELAS</label><input required placeholder="Cth: XII IPA 1" className="w-full border p-2 rounded text-sm" value={formSiswa.kelas} onChange={e => setFormSiswa({...formSiswa, kelas: e.target.value})} /></div>
+                        <button type="submit" className="w-full bg-emerald-600 text-white rounded font-bold py-2 hover:bg-emerald-700">Simpan Siswa</button>
                       </form>
                     </div>
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-200 bg-blue-50 flex flex-col justify-center items-center text-center">
+                      <FileSpreadsheet className="w-16 h-16 text-blue-600 mb-4" />
+                      <h3 className="font-bold text-lg text-blue-900 mb-2">Import Massal Siswa</h3>
+                      <label className={`w-full ${isUploading ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'} text-white font-bold py-2.5 px-4 rounded cursor-pointer`}>
+                        {isUploading ? "Mengimpor..." : "Upload Excel (NISN, Nama, Kelas)"}
+                        <input type="file" accept=".xlsx, .xls, .csv" className="hidden" disabled={isUploading} onChange={(e) => uploadExcel(e, 'users', row => row.NISN || row.nisn ? ({nisn_nip: String(row.NISN || row.nisn), nama_lengkap: String(row.Nama||row.nama||''), kelas: String(row.Kelas||row.kelas||''), password_text: String(row.NISN || row.nisn), role: 'siswa'}) : null)} />
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {/* TABEL SISWA DENGAN FILTER KELAS */}
+                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                      <h3 className="font-bold text-lg text-gray-800">Daftar Siswa Terdaftar</h3>
+                      
+                      <div className="flex items-center gap-2 w-full md:w-auto">
+                        <label className="text-xs font-bold text-gray-500 whitespace-nowrap">Filter Kelas:</label>
+                        <select 
+                          className="w-full md:w-48 border p-2 rounded text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-emerald-500"
+                          value={filterKelasSiswa}
+                          onChange={(e) => setFilterKelasSiswa(e.target.value)}
+                        >
+                          <option value="">Semua Kelas</option>
+                          {[...new Set(daftarSiswa.map(s => s.kelas))].filter(Boolean).sort().map(kelas => (
+                            <option key={kelas} value={kelas}>{kelas}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
 
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                      <div className="p-5 border-b bg-gray-50"><h3 className="font-bold text-lg text-gray-800">Daftar Data Ujian (Bank Soal)</h3></div>
-                      <table className="w-full text-left text-sm border-collapse">
-                        <thead><tr className="bg-white border-b"><th className="p-4">#</th><th className="p-4">Mata Pelajaran</th><th className="p-4">Kelas/Jurusan</th><th className="p-4 text-center">Jumlah Soal</th><th className="p-4 text-center">Status</th><th className="p-4 text-center">Opsi</th></tr></thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {daftarPaket.map((paket, index) => {
-                            const jumlahSoal = daftarSoal.filter(s => s.paket_id === paket.id).length;
-                            return (
-                              <tr key={paket.id} className="hover:bg-gray-50">
-                                <td className="p-4 text-gray-500">{index + 1}</td>
-                                <td className="p-4 font-bold text-gray-800">{paket.mata_pelajaran?.nama_mapel}</td>
-                                <td className="p-4 font-medium text-gray-600">{paket.kelas_jurusan}</td>
-                                <td className="p-4 text-center">
-                                  <button onClick={() => { setSelectedPaket(paket); setViewPaket('detail'); }} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded-full font-bold shadow-sm transition">Buat Soal ({jumlahSoal})</button>
-                                </td>
-                                <td className="p-4 text-center">
-                                  <button onClick={() => toggleStatusPaket(paket.id, paket.status_ujian)} className={`px-3 py-1 text-xs font-bold rounded ${paket.status_ujian === 'Aktif' ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-100 text-yellow-700'}`}>{paket.status_ujian}</button>
-                                </td>
-                                <td className="p-4 flex gap-2 justify-center">
-                                  <button onClick={() => hapusData('paket_ujian', paket.id)} className="bg-red-50 text-red-600 p-2 rounded hover:bg-red-100 transition"><Trash2 size={16}/></button>
-                                </td>
-                              </tr>
-                            )
-                          })}
-                          {daftarPaket.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-500">Belum ada paket ujian yang dibuat.</td></tr>}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead>
+                          <tr className="bg-gray-100">
+                            <th className="p-3 font-semibold">NISN</th>
+                            <th className="p-3 font-semibold">Nama Lengkap</th>
+                            <th className="p-3 font-semibold">Kelas</th>
+                            <th className="p-3 font-semibold text-center">Hapus</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {daftarSiswa
+                            .filter(s => filterKelasSiswa === '' || s.kelas === filterKelasSiswa)
+                            .map(s => (
+                            <tr key={s.id} className="border-b hover:bg-gray-50 transition">
+                              <td className="p-3 font-mono text-gray-600">{s.nisn_nip}</td>
+                              <td className="p-3 font-bold">{s.nama_lengkap}</td>
+                              <td className="p-3">
+                                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">
+                                  {s.kelas}
+                                </span>
+                              </td>
+                              <td className="p-3 text-center">
+                                <button 
+                                  onClick={() => hapusData('users', s.id)}
+                                  className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition"
+                                  title="Hapus Siswa"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                          
+                          {daftarSiswa.filter(s => filterKelasSiswa === '' || s.kelas === filterKelasSiswa).length === 0 && (
+                            <tr>
+                              <td colSpan="4" className="p-8 text-center text-gray-500 font-medium">
+                                Tidak ada siswa yang ditemukan di kelas ini.
+                              </td>
+                            </tr>
+                          )}
                         </tbody>
                       </table>
                     </div>
-                  </>
-                )}
+                  </div>
+                </div>
+              )}
 
-                {viewPaket === 'detail' && selectedPaket && (
-                  <div className="space-y-6">
-                    <div className="bg-gray-800 p-6 rounded-xl shadow-lg text-white flex justify-between items-center">
-                      <div>
-                        <button onClick={() => setViewPaket('list')} className="text-gray-300 hover:text-white flex items-center text-sm font-bold mb-2 transition"><ArrowLeft size={16} className="mr-1"/> Kembali ke Daftar Ujian</button>
-                        <h2 className="text-2xl font-black">{selectedPaket.mata_pelajaran?.nama_mapel}</h2>
-                        <p className="text-gray-300 font-medium tracking-wide">Kelas/Jurusan: {selectedPaket.kelas_jurusan}</p>
-                      </div>
-                      <div className="bg-gray-700 px-5 py-3 rounded-lg text-center">
-                         <p className="text-xs text-gray-400 font-bold mb-1">TOTAL SOAL</p>
-                         <p className="text-3xl font-black text-emerald-400">{daftarSoal.filter(s => s.paket_id == selectedPaket.id).length}</p>
-                      </div>
-                    </div>
+              {/* MAPEL */}
+              {activeTab === 'mapel' && (isAdmin || isGuru) && (
+                <div className="space-y-6">
+                   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 w-full md:w-1/2">
+                      <h3 className="font-bold text-lg mb-4 text-gray-800">Tambah Mata Pelajaran</h3>
+                      <form onSubmit={handleTambahMapel} className="flex gap-2">
+                        <input required placeholder="Cth: Matematika Wajib" className="flex-1 border p-2 rounded text-sm outline-none" value={formMapel.nama} onChange={e => setFormMapel({nama: e.target.value})} />
+                        <button type="submit" className="bg-blue-600 text-white px-6 rounded font-bold text-sm">Tambah</button>
+                      </form>
+                   </div>
+                   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 w-full md:w-1/2">
+                      <table className="w-full text-left text-sm">
+                        <thead><tr className="bg-gray-100"><th className="p-3 font-semibold">Nama Mata Pelajaran</th><th className="p-3 font-semibold text-right">Aksi</th></tr></thead>
+                        <tbody>{daftarMapel.map(m => <tr key={m.id} className="border-b"><td className="p-3">{m.nama_mapel}</td><td className="p-3 text-right"><button onClick={()=>hapusData('mata_pelajaran', m.id)}><Trash2 size={16} className="text-red-500"/></button></td></tr>)}</tbody>
+                      </table>
+                   </div>
+                </div>
+              )}
 
-                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                      <div className="xl:col-span-1 space-y-4 sticky top-6">
-                        <form onSubmit={handleTambahSoal} className="bg-white p-5 rounded-lg shadow border border-gray-200 space-y-4">
-                          <h3 className="font-bold text-gray-800 text-lg mb-2 flex items-center">
-                            <PlusCircle size={18} className="mr-2 text-blue-600" /> 
-                            {editingSoalId ? "Edit Soal" : "Tulis Soal Manual"}
-                          </h3>
-                          
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 block mb-1">PERTANYAAN</label>
-                            <textarea required rows="3" value={formSoal.teks} onChange={e => setFormSoal({ ...formSoal, teks: e.target.value })} className="w-full p-2 border rounded text-sm outline-none"></textarea>
+              {/* BANK SOAL (MASTER - DETAIL VIEW) */}
+              {activeTab === 'soal' && (isAdmin || isGuru) && (
+                <div className="space-y-6">
+                  
+                  {viewPaket === 'list' && (
+                    <>
+                      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <h3 className="font-bold text-xl mb-4 text-gray-800">Tambah Data Ujian Baru</h3>
+                        <form onSubmit={handleTambahPaket} className="flex items-end gap-4">
+                          <div className="flex-1">
+                            <label className="text-xs font-bold text-gray-500 block mb-1">MATA PELAJARAN</label>
+                            <select required className="w-full border p-2.5 rounded outline-none" value={formPaket.mapel_id} onChange={e=>setFormPaket({...formPaket, mapel_id: e.target.value})}>
+                              <option value="">- Pilih Mapel -</option>
+                              {daftarMapel.map(m=><option key={m.id} value={m.id}>{m.nama_mapel}</option>)}
+                            </select>
                           </div>
-
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 block mb-1">GAMBAR (Opsional)</label>
-                            <input type="file" accept="image/*" onChange={e => setSelectedImage(e.target.files[0])} className="w-full text-xs border p-1 rounded bg-gray-50" />
+                          <div className="flex-1">
+                            <label className="text-xs font-bold text-gray-500 block mb-1">KELAS / JURUSAN</label>
+                            <select required className="w-full border p-2.5 rounded outline-none" value={formPaket.kelas_jurusan} onChange={e=>setFormPaket({...formPaket, kelas_jurusan: e.target.value})}>
+                              <option value="">- Pilih Kelas -</option>
+                              {[...new Set(daftarSiswa.map(s => s.kelas))].filter(Boolean).map(k => (
+                                <option key={k} value={k}>{k}</option>
+                              ))}
+                            </select>
                           </div>
-
-                          <div className="grid grid-cols-2 gap-2">
-                            <input required placeholder="Opsi A" value={formSoal.a} onChange={e => setFormSoal({ ...formSoal, a: e.target.value })} className="border p-2 rounded text-sm" />
-                            <input required placeholder="Opsi B" value={formSoal.b} onChange={e => setFormSoal({ ...formSoal, b: e.target.value })} className="border p-2 rounded text-sm" />
-                            <input required placeholder="Opsi C" value={formSoal.c} onChange={e => setFormSoal({ ...formSoal, c: e.target.value })} className="border p-2 rounded text-sm" />
-                            <input required placeholder="Opsi D" value={formSoal.d} onChange={e => setFormSoal({ ...formSoal, d: e.target.value })} className="border p-2 rounded text-sm" />
-                            <input placeholder="Opsi E (Opsional)" value={formSoal.e} onChange={e => setFormSoal({ ...formSoal, e: e.target.value })} className="border p-2 rounded text-sm col-span-2" />
-                          </div>
-
-                          <div className="grid grid-cols-3 gap-2">
-                            <div>
-                              <label className="text-xs font-bold">Kunci</label>
-                              <select value={formSoal.kunci} onChange={e => setFormSoal({ ...formSoal, kunci: e.target.value })} className="w-full border p-2 rounded text-sm">
-                                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option>
-                              </select>
-                            </div>
-                            <div><label className="text-xs font-bold">Bobot</label><input required type="number" min="1" value={formSoal.bobot} onChange={e => setFormSoal({ ...formSoal, bobot: e.target.value })} className="w-full border p-2 rounded text-sm" /></div>
-                            <div><label className="text-xs font-bold">Status</label><select value={formSoal.status} onChange={e => setFormSoal({ ...formSoal, status: e.target.value })} className="w-full border p-2 rounded text-sm font-bold"><option value="draft">DRAFT</option><option value="publish">PUBLISH</option></select></div>
-                          </div>
-
-                          <div className="flex gap-2">
-                            <button type="submit" disabled={isUploading} className="flex-1 bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition">
-                              {isUploading ? "Mengunggah..." : (editingSoalId ? "Update Soal" : "Simpan Soal")}
-                            </button>
-                            {editingSoalId && (
-                              <button type="button" onClick={handleBatalEdit} className="bg-gray-300 text-gray-700 font-bold px-3 py-2 rounded hover:bg-gray-400 transition text-sm">
-                                Batal
-                              </button>
-                            )}
-                          </div>
+                          <button type="submit" className="bg-blue-600 text-white px-6 py-2.5 rounded font-bold hover:bg-blue-700">Buat Paket</button>
                         </form>
+                      </div>
 
-                        <div className="bg-white p-5 rounded-lg shadow border border-emerald-200 bg-emerald-50 text-center">
-                          <h3 className="font-bold text-emerald-900 text-sm mb-2 flex items-center justify-center"><FileSpreadsheet size={16} className="mr-2"/> Import Excel (Otomatis Masuk Paket Ini)</h3>
-                          <label className={`block w-full ${isUploading ? 'bg-gray-400' : 'bg-emerald-600 hover:bg-emerald-700'} text-white font-bold py-2.5 rounded text-sm cursor-pointer transition`}>
-                            {isUploading ? "Loading..." : "Pilih File Excel"}
-                            <input type="file" accept=".xlsx, .xls, .csv" className="hidden" disabled={isUploading} 
-                              onChange={(e) => uploadExcel(e, 'soal', row => ({
-                                  paket_id: selectedPaket.id,
-                                  mapel_id: selectedPaket.mapel_id,
-                                  teks_pertanyaan: String(row.teks_pertanyaan || row.Pertanyaan || row.pertanyaan || ''),
-                                  opsi_a: String(row.opsi_a || row.A || row.a || ''),
-                                  opsi_b: String(row.opsi_b || row.B || row.b || ''),
-                                  opsi_c: String(row.opsi_c || row.C || row.c || ''),
-                                  opsi_d: String(row.opsi_d || row.D || row.d || ''),
-                                  opsi_e: String(row.opsi_e || row.E || row.e || ''),
-                                  kunci_jawaban: String(row.Kunci || row.kunci || 'A'),
-                                  bobot_nilai: Number(row.Bobot || row.bobot || 10),
-                                  status: 'publish'
-                              }))} 
-                            />
-                          </label>
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="p-5 border-b bg-gray-50"><h3 className="font-bold text-lg text-gray-800">Daftar Data Ujian (Bank Soal)</h3></div>
+                        <table className="w-full text-left text-sm border-collapse">
+                          <thead><tr className="bg-white border-b"><th className="p-4">#</th><th className="p-4">Mata Pelajaran</th><th className="p-4">Kelas/Jurusan</th><th className="p-4 text-center">Jumlah Soal</th><th className="p-4 text-center">Status</th><th className="p-4 text-center">Opsi</th></tr></thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {daftarPaket.map((paket, index) => {
+                              const jumlahSoal = daftarSoal.filter(s => s.paket_id === paket.id).length;
+                              return (
+                                <tr key={paket.id} className="hover:bg-gray-50">
+                                  <td className="p-4 text-gray-500">{index + 1}</td>
+                                  <td className="p-4 font-bold text-gray-800">{paket.mata_pelajaran?.nama_mapel}</td>
+                                  <td className="p-4 font-medium text-gray-600">{paket.kelas_jurusan}</td>
+                                  <td className="p-4 text-center">
+                                    <button onClick={() => { setSelectedPaket(paket); setViewPaket('detail'); }} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded-full font-bold shadow-sm transition">Buat Soal ({jumlahSoal})</button>
+                                  </td>
+                                  <td className="p-4 text-center">
+                                    <button onClick={() => toggleStatusPaket(paket.id, paket.status_ujian)} className={`px-3 py-1 text-xs font-bold rounded ${paket.status_ujian === 'Aktif' ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-100 text-yellow-700'}`}>{paket.status_ujian}</button>
+                                  </td>
+                                  <td className="p-4 flex gap-2 justify-center">
+                                    <button onClick={() => hapusData('paket_ujian', paket.id)} className="bg-red-50 text-red-600 p-2 rounded hover:bg-red-100 transition"><Trash2 size={16}/></button>
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                            {daftarPaket.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-500">Belum ada paket ujian yang dibuat.</td></tr>}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+
+                  {viewPaket === 'detail' && selectedPaket && (
+                    <div className="space-y-6">
+                      <div className="bg-gray-800 p-6 rounded-xl shadow-lg text-white flex justify-between items-center">
+                        <div>
+                          <button onClick={() => setViewPaket('list')} className="text-gray-300 hover:text-white flex items-center text-sm font-bold mb-2 transition"><ArrowLeft size={16} className="mr-1"/> Kembali ke Daftar Ujian</button>
+                          <h2 className="text-2xl font-black">{selectedPaket.mata_pelajaran?.nama_mapel}</h2>
+                          <p className="text-gray-300 font-medium tracking-wide">Kelas/Jurusan: {selectedPaket.kelas_jurusan}</p>
+                        </div>
+                        <div className="bg-gray-700 px-5 py-3 rounded-lg text-center">
+                           <p className="text-xs text-gray-400 font-bold mb-1">TOTAL SOAL</p>
+                           <p className="text-3xl font-black text-emerald-400">{daftarSoal.filter(s => s.paket_id == selectedPaket.id).length}</p>
                         </div>
                       </div>
 
-                      <div className="xl:col-span-2 space-y-4">
-                        {daftarSoal.filter(s => s.paket_id === selectedPaket.id).map((soal, i) => (
-                          <div key={soal.id} className={`bg-white p-5 rounded-lg shadow-sm border-l-4 flex justify-between items-start ${soal.status === 'publish' ? 'border-emerald-500' : 'border-gray-400 opacity-75'}`}>
-                            <div className="flex-1 pr-4">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className={`text-[10px] px-2 py-0.5 rounded font-black text-white tracking-widest ${soal.status === 'publish' ? 'bg-emerald-500' : 'bg-gray-500'}`}>{soal.status?.toUpperCase()}</span>
-                                <span className="text-xs font-bold text-gray-400">Soal #{i + 1}</span>
-                              </div>
-                              <p className="font-bold text-gray-800 text-sm mb-3 whitespace-pre-line">{soal.teks_pertanyaan}</p>
-                              {soal.gambar_url && <img src={soal.gambar_url} alt="Img" className="max-h-40 mb-4 border rounded-lg p-1 bg-gray-50" />}
-                              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-600">
-                                <span className={soal.kunci_jawaban === 'A' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded' : 'px-2'}>A. {soal.opsi_a}</span>
-                                <span className={soal.kunci_jawaban === 'B' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded' : 'px-2'}>B. {soal.opsi_b}</span>
-                                <span className={soal.kunci_jawaban === 'C' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded' : 'px-2'}>C. {soal.opsi_c}</span>
-                                <span className={soal.kunci_jawaban === 'D' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded' : 'px-2'}>D. {soal.opsi_d}</span>
-                                
-                                {/* Ini tambahan untuk render Opsi E */}
-                                {soal.opsi_e && (
-                                  <span className={soal.kunci_jawaban === 'E' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded col-span-2' : 'px-2 col-span-2'}>E. {soal.opsi_e}</span>
-                                )}
-                              </div>
+                      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                        <div className="xl:col-span-1 space-y-4 relative">
+                          <form onSubmit={handleTambahSoal} className="bg-white p-5 rounded-lg shadow border border-gray-200 space-y-4 sticky top-0">
+                            <h3 className="font-bold text-gray-800 text-lg mb-2 flex items-center">
+                              <PlusCircle size={18} className="mr-2 text-blue-600" /> 
+                              {editingSoalId ? "Edit Soal" : "Tulis Soal Manual"}
+                            </h3>
+                            
+                            <div>
+                              <label className="text-xs font-bold text-gray-500 block mb-1">PERTANYAAN</label>
+                              <textarea required rows="3" value={formSoal.teks} onChange={e => setFormSoal({ ...formSoal, teks: e.target.value })} className="w-full p-2 border rounded text-sm outline-none"></textarea>
                             </div>
-                            <div className="flex flex-col gap-2">
-                              <button 
-                                onClick={() => handleEditSoal(soal)} 
-                                className="bg-yellow-50 text-yellow-700 border border-yellow-200 px-3 py-1.5 rounded text-xs font-bold flex items-center justify-center hover:bg-yellow-100 transition shadow-sm"
-                              >
-                                <Edit size={14} className="mr-1" /> Edit
+
+                            <div>
+                              <label className="text-xs font-bold text-gray-500 block mb-1">GAMBAR (Opsional)</label>
+                              <input type="file" accept="image/*" onChange={e => setSelectedImage(e.target.files[0])} className="w-full text-xs border p-1 rounded bg-gray-50" />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <input required placeholder="Opsi A" value={formSoal.a} onChange={e => setFormSoal({ ...formSoal, a: e.target.value })} className="border p-2 rounded text-sm" />
+                              <input required placeholder="Opsi B" value={formSoal.b} onChange={e => setFormSoal({ ...formSoal, b: e.target.value })} className="border p-2 rounded text-sm" />
+                              <input required placeholder="Opsi C" value={formSoal.c} onChange={e => setFormSoal({ ...formSoal, c: e.target.value })} className="border p-2 rounded text-sm" />
+                              <input required placeholder="Opsi D" value={formSoal.d} onChange={e => setFormSoal({ ...formSoal, d: e.target.value })} className="border p-2 rounded text-sm" />
+                              <input placeholder="Opsi E (Opsional)" value={formSoal.e} onChange={e => setFormSoal({ ...formSoal, e: e.target.value })} className="border p-2 rounded text-sm col-span-2" />
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-2">
+                              <div>
+                                <label className="text-xs font-bold">Kunci</label>
+                                <select value={formSoal.kunci} onChange={e => setFormSoal({ ...formSoal, kunci: e.target.value })} className="w-full border p-2 rounded text-sm">
+                                  <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option>
+                                </select>
+                              </div>
+                              <div><label className="text-xs font-bold">Bobot</label><input required type="number" min="1" value={formSoal.bobot} onChange={e => setFormSoal({ ...formSoal, bobot: e.target.value })} className="w-full border p-2 rounded text-sm" /></div>
+                              <div><label className="text-xs font-bold">Status</label><select value={formSoal.status} onChange={e => setFormSoal({ ...formSoal, status: e.target.value })} className="w-full border p-2 rounded text-sm font-bold"><option value="draft">DRAFT</option><option value="publish">PUBLISH</option></select></div>
+                            </div>
+
+                            <div className="flex gap-2">
+                              <button type="submit" disabled={isUploading} className="flex-1 bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition">
+                                {isUploading ? "Mengunggah..." : (editingSoalId ? "Update Soal" : "Simpan Soal")}
                               </button>
-                              <button onClick={async () => { await supabase.from('soal').update({status: soal.status === 'publish' ? 'draft' : 'publish'}).eq('id', soal.id); fetchData(true); }} className="bg-white border text-gray-700 px-3 py-1.5 rounded text-xs font-bold hover:bg-gray-50 transition shadow-sm">Jadikan {soal.status === 'publish' ? 'Draft' : 'Publish'}</button>
-                              <button onClick={() => hapusData('soal', soal.id)} className="bg-red-50 text-red-600 px-3 py-1.5 rounded text-xs font-bold flex items-center justify-center hover:bg-red-100 transition"><Trash2 size={14} className="mr-1"/> Hapus</button>
+                              {editingSoalId && (
+                                <button type="button" onClick={handleBatalEdit} className="bg-gray-300 text-gray-700 font-bold px-3 py-2 rounded hover:bg-gray-400 transition text-sm">
+                                  Batal
+                                </button>
+                              )}
                             </div>
-                          </div>
-                        ))}
-                        {daftarSoal.filter(s => s.paket_id === selectedPaket.id).length === 0 && <div className="bg-yellow-50 p-10 text-center rounded-xl border border-yellow-200"><p className="font-bold text-yellow-800">Paket ini belum memiliki soal.</p></div>}
+                          </form>
+
+                        </div>
+
+                        <div className="xl:col-span-2 space-y-4">
+                          {daftarSoal.filter(s => s.paket_id === selectedPaket.id).map((soal, i) => (
+                            <div key={soal.id} className={`bg-white p-5 rounded-lg shadow-sm border-l-4 flex justify-between items-start ${soal.status === 'publish' ? 'border-emerald-500' : 'border-gray-400 opacity-75'}`}>
+                              <div className="flex-1 pr-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className={`text-[10px] px-2 py-0.5 rounded font-black text-white tracking-widest ${soal.status === 'publish' ? 'bg-emerald-500' : 'bg-gray-500'}`}>{soal.status?.toUpperCase()}</span>
+                                  <span className="text-xs font-bold text-gray-400">Soal #{i + 1}</span>
+                                </div>
+                                <p className="font-bold text-gray-800 text-sm mb-3 whitespace-pre-line">{soal.teks_pertanyaan}</p>
+                                {soal.gambar_url && <img src={soal.gambar_url} alt="Img" className="max-h-40 mb-4 border rounded-lg p-1 bg-gray-50" />}
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-600">
+                                  <span className={soal.kunci_jawaban === 'A' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded' : 'px-2'}>A. {soal.opsi_a}</span>
+                                  <span className={soal.kunci_jawaban === 'B' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded' : 'px-2'}>B. {soal.opsi_b}</span>
+                                  <span className={soal.kunci_jawaban === 'C' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded' : 'px-2'}>C. {soal.opsi_c}</span>
+                                  <span className={soal.kunci_jawaban === 'D' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded' : 'px-2'}>D. {soal.opsi_d}</span>
+                                  
+                                  {/* Ini tambahan untuk render Opsi E */}
+                                  {soal.opsi_e && (
+                                    <span className={soal.kunci_jawaban === 'E' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded col-span-2' : 'px-2 col-span-2'}>E. {soal.opsi_e}</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                <button 
+                                  onClick={() => handleEditSoal(soal)} 
+                                  className="bg-yellow-50 text-yellow-700 border border-yellow-200 px-3 py-1.5 rounded text-xs font-bold flex items-center justify-center hover:bg-yellow-100 transition shadow-sm"
+                                >
+                                  <Edit size={14} className="mr-1" /> Edit
+                                </button>
+                                <button onClick={async () => { await supabase.from('soal').update({status: soal.status === 'publish' ? 'draft' : 'publish'}).eq('id', soal.id); fetchData(true); }} className="bg-white border text-gray-700 px-3 py-1.5 rounded text-xs font-bold hover:bg-gray-50 transition shadow-sm">Jadikan {soal.status === 'publish' ? 'Draft' : 'Publish'}</button>
+                                <button onClick={() => hapusData('soal', soal.id)} className="bg-red-50 text-red-600 px-3 py-1.5 rounded text-xs font-bold flex items-center justify-center hover:bg-red-100 transition"><Trash2 size={14} className="mr-1"/> Hapus</button>
+                              </div>
+                            </div>
+                          ))}
+                          {daftarSoal.filter(s => s.paket_id === selectedPaket.id).length === 0 && <div className="bg-yellow-50 p-10 text-center rounded-xl border border-yellow-200"><p className="font-bold text-yellow-800">Paket ini belum memiliki soal.</p></div>}
+                        </div>
                       </div>
                     </div>
+                  )}
+                </div>
+              )}
+
+              {/* ANALISIS SOAL */}
+              {activeTab === 'analisis' && (isAdmin || isGuru) && (
+                <div className="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
+                  <h3 className="font-bold text-xl text-gray-800 mb-6 flex items-center"><BarChart className="mr-2 text-emerald-600"/> Analisis Butir Soal</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm border-collapse">
+                      <thead><tr className="bg-gray-50 border-b"><th className="p-3">Mata Pelajaran</th><th className="p-3">Potongan Soal</th><th className="p-3 text-center">Menjawab Benar</th><th className="p-3 text-center">Menjawab Salah</th><th className="p-3">Tingkat Kesulitan</th></tr></thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {analisisSoal.map(stat => (
+                          <tr key={stat.id} className="hover:bg-gray-50">
+                            <td className="p-3 font-bold text-blue-700">{stat.mapel}</td>
+                            <td className="p-3 text-gray-600 truncate max-w-xs">{stat.teks}</td>
+                            <td className="p-3 text-center font-bold text-emerald-600">{stat.benar}</td>
+                            <td className="p-3 text-center font-bold text-red-500">{stat.salah}</td>
+                            <td className="p-3 w-48">
+                              <div className="w-full bg-gray-200 rounded-full h-2.5 flex items-center justify-between mt-1"><div className={`h-2.5 rounded-full ${stat.persentase > 70 ? 'bg-emerald-500' : stat.persentase > 40 ? 'bg-yellow-400' : 'bg-red-500'}`} style={{width: `${stat.persentase}%`}}></div></div>
+                              <span className="text-[10px] text-gray-500">{stat.persentase}% Siswa Benar</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                )}
-              </div>
-            )}
-
-            {/* ANALISIS SOAL */}
-            {activeTab === 'analisis' && (isAdmin || isGuru) && (
-              <div className="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
-                <h3 className="font-bold text-xl text-gray-800 mb-6 flex items-center"><BarChart className="mr-2 text-emerald-600"/> Analisis Butir Soal</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm border-collapse">
-                    <thead><tr className="bg-gray-50 border-b"><th className="p-3">Mata Pelajaran</th><th className="p-3">Potongan Soal</th><th className="p-3 text-center">Menjawab Benar</th><th className="p-3 text-center">Menjawab Salah</th><th className="p-3">Tingkat Kesulitan</th></tr></thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {analisisSoal.map(stat => (
-                        <tr key={stat.id} className="hover:bg-gray-50">
-                          <td className="p-3 font-bold text-blue-700">{stat.mapel}</td>
-                          <td className="p-3 text-gray-600 truncate max-w-xs">{stat.teks}</td>
-                          <td className="p-3 text-center font-bold text-emerald-600">{stat.benar}</td>
-                          <td className="p-3 text-center font-bold text-red-500">{stat.salah}</td>
-                          <td className="p-3 w-48">
-                            <div className="w-full bg-gray-200 rounded-full h-2.5 flex items-center justify-between mt-1"><div className={`h-2.5 rounded-full ${stat.persentase > 70 ? 'bg-emerald-500' : stat.persentase > 40 ? 'bg-yellow-400' : 'bg-red-500'}`} style={{width: `${stat.persentase}%`}}></div></div>
-                            <span className="text-[10px] text-gray-500">{stat.persentase}% Siswa Benar</span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* REKAP NILAI */}
-            {activeTab === 'nilai' && (
-              <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden p-6">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
-                  <div>
-                    <h3 className="font-bold text-xl text-gray-800 mb-4">Rekapitulasi Nilai Ujian</h3>
-                    <div className="flex gap-3">
-                      <div><label className="text-xs font-bold block mb-1">Filter Kelas</label><select className="border p-2 rounded text-sm w-40" value={filterKelasNilai} onChange={(e) => setFilterKelasNilai(e.target.value)}><option value="">Semua Kelas</option>{[...new Set(rekapNilai.map(item => item.kelas))].filter(Boolean).map(k => <option key={k} value={k}>{k}</option>)}</select></div>
-                      <div><label className="text-xs font-bold block mb-1">Filter Mapel</label><select className="border p-2 rounded text-sm w-48" value={filterMapelNilai} onChange={(e) => setFilterMapelNilai(e.target.value)}><option value="">Semua Mapel</option>{[...new Set(rekapNilai.map(item => item.mapel))].filter(Boolean).map(m => <option key={m} value={m}>{m}</option>)}</select></div>
-                    </div>
-                  </div>
-                  <button onClick={() => exportToExcel(rekapNilai.filter(item => (filterKelasNilai === '' || item.kelas === filterKelasNilai) && (filterMapelNilai === '' || item.mapel === filterMapelNilai)))} className="bg-emerald-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-emerald-700 flex items-center shadow-sm"><Download size={18} className="mr-2" /> Download Excel</button>
-                </div>
-                <div className="overflow-x-auto border rounded-lg">
-                  <table className="w-full border-collapse text-left text-sm">
-                    <thead className="bg-gray-50 text-gray-700 font-semibold border-b"><tr><th className="p-4">NISN</th><th className="p-4">Nama Siswa</th><th className="p-4">Kelas</th><th className="p-4">Mata Pelajaran</th><th className="p-4 text-center">Nilai Akhir</th><th className="p-4 text-center">Aksi Admin</th></tr></thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {rekapNilai.filter(item => (filterKelasNilai === '' || item.kelas === filterKelasNilai) && (filterMapelNilai === '' || item.mapel === filterMapelNilai)).map((s, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50 transition">
-                          <td className="p-4 font-mono text-gray-600">{s.nisn}</td><td className="p-4 font-bold">{s.nama}</td><td className="p-4 text-gray-600">{s.kelas}</td><td className="p-4"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">{s.mapel}</span></td><td className="p-4 text-center"><span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-bold">{s.nilai}</span></td>
-                          <td className="p-4 text-center"><button onClick={async () => { if(!window.confirm("RESET UJIAN? Semua jawaban dan nilai siswa ini akan dihapus permanen!")) return; await supabase.from('jawaban_siswa').delete().eq('siswa_id', s.siswa_id); await supabase.from('log_pelanggaran').delete().eq('siswa_id', s.siswa_id); await supabase.from('aktivitas_ujian').delete().eq('siswa_id', s.siswa_id); alert("Ujian direset."); fetchData(true); }} className="bg-red-100 text-red-700 px-3 py-1 rounded font-bold text-xs flex items-center justify-center mx-auto hover:bg-red-200"><RefreshCcw size={12} className="mr-1"/> Reset Ujian</button></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* TAB BARU: LIVE MONITORING 2.0 (AKTIVITAS & PELANGGARAN) */}
-            {activeTab === 'monitoring' && (
-              <div className="space-y-6">
-                
-                {/* 1. TABEL AKTIVITAS LIVE */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-200 border-t-4 border-t-blue-500">
-                  <div className="flex justify-between items-center mb-6">
+              {/* REKAP NILAI */}
+              {activeTab === 'nilai' && (
+                <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden p-6">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
                     <div>
-                      <h3 className="font-bold text-xl text-blue-800 flex items-center"><Users size={24} className="mr-2"/> Status Live Peserta Ujian</h3>
-                      <p className="text-sm mt-1 text-gray-500">Memonitor siswa yang sedang berada di dalam ruang ujian.</p>
+                      <h3 className="font-bold text-xl text-gray-800 mb-4">Rekapitulasi Nilai Ujian</h3>
+                      <div className="flex gap-3">
+                        <div><label className="text-xs font-bold block mb-1">Filter Kelas</label><select className="border p-2 rounded text-sm w-40" value={filterKelasNilai} onChange={(e) => setFilterKelasNilai(e.target.value)}><option value="">Semua Kelas</option>{[...new Set(rekapNilai.map(item => item.kelas))].filter(Boolean).map(k => <option key={k} value={k}>{k}</option>)}</select></div>
+                        <div><label className="text-xs font-bold block mb-1">Filter Mapel</label><select className="border p-2 rounded text-sm w-48" value={filterMapelNilai} onChange={(e) => setFilterMapelNilai(e.target.value)}><option value="">Semua Mapel</option>{[...new Set(rekapNilai.map(item => item.mapel))].filter(Boolean).map(m => <option key={m} value={m}>{m}</option>)}</select></div>
+                      </div>
                     </div>
-                    <button onClick={() => fetchData(true)} className="bg-gray-100 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Refresh Data</button>
+                    <button onClick={() => exportToExcel(rekapNilai.filter(item => (filterKelasNilai === '' || item.kelas === filterKelasNilai) && (filterMapelNilai === '' || item.mapel === filterMapelNilai)))} className="bg-emerald-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-emerald-700 flex items-center shadow-sm"><Download size={18} className="mr-2" /> Download Excel</button>
                   </div>
+                  <div className="overflow-x-auto border rounded-lg">
+                    <table className="w-full border-collapse text-left text-sm">
+                      <thead className="bg-gray-50 text-gray-700 font-semibold border-b"><tr><th className="p-4">NISN</th><th className="p-4">Nama Siswa</th><th className="p-4">Kelas</th><th className="p-4">Mata Pelajaran</th><th className="p-4 text-center">Nilai Akhir</th><th className="p-4 text-center">Aksi Admin</th></tr></thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {rekapNilai.filter(item => (filterKelasNilai === '' || item.kelas === filterKelasNilai) && (filterMapelNilai === '' || item.mapel === filterMapelNilai)).map((s, idx) => (
+                          <tr key={idx} className="hover:bg-gray-50 transition">
+                            <td className="p-4 font-mono text-gray-600">{s.nisn}</td><td className="p-4 font-bold">{s.nama}</td><td className="p-4 text-gray-600">{s.kelas}</td><td className="p-4"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">{s.mapel}</span></td><td className="p-4 text-center"><span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-bold">{s.nilai}</span></td>
+                            <td className="p-4 text-center"><button onClick={async () => { if(!window.confirm("RESET UJIAN? Semua jawaban dan nilai siswa ini akan dihapus permanen!")) return; await supabase.from('jawaban_siswa').delete().eq('siswa_id', s.siswa_id); await supabase.from('log_pelanggaran').delete().eq('siswa_id', s.siswa_id); await supabase.from('aktivitas_ujian').delete().eq('siswa_id', s.siswa_id); alert("Ujian direset."); fetchData(true); }} className="bg-red-100 text-red-700 px-3 py-1 rounded font-bold text-xs flex items-center justify-center mx-auto hover:bg-red-200"><RefreshCcw size={12} className="mr-1"/> Reset Ujian</button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB BARU: LIVE MONITORING 2.0 (AKTIVITAS & PELANGGARAN) */}
+              {activeTab === 'monitoring' && (
+                <div className="space-y-6">
                   
-                  <div className="overflow-x-auto border rounded-lg">
-                    <table className="w-full text-left text-sm border-collapse">
-                      <thead><tr className="bg-blue-50 text-blue-800 border-b border-blue-100"><th className="p-4">Ruangan</th><th className="p-4">Nama Siswa</th><th className="p-4">Kelas</th><th className="p-4">Waktu Mulai</th><th className="p-4">Status Saat Ini</th></tr></thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {aktivitasSiswa.length === 0 ? (
-                          <tr><td colSpan="5" className="p-8 text-center text-gray-500 font-bold">Belum ada siswa yang memulai ujian.</td></tr>
-                        ) : (
-                          aktivitasSiswa.map((akt) => (
-                            <tr key={akt.id} className="hover:bg-blue-50/30">
-                              <td className="p-4 font-bold text-gray-800">{akt.sesi_ujian?.ruangan?.nama_ruangan || '-'}</td>
-                              <td className="p-4 font-bold">{akt.users?.nama_lengkap || '-'}</td>
-                              <td className="p-4">{akt.users?.kelas || '-'}</td>
-                              <td className="p-4 font-mono text-gray-500">{new Date(akt.waktu_mulai).toLocaleTimeString('id-ID')}</td>
-                              <td className="p-4">
-                                <span className={`px-3 py-1 rounded-full font-bold text-xs flex items-center w-fit ${akt.status === 'Selesai Ujian' ? 'bg-gray-100 text-gray-600' : 'bg-emerald-100 text-emerald-700 animate-pulse'}`}>
-                                  {akt.status === 'Selesai Ujian' ? <CheckCircle size={12} className="mr-1"/> : <Eye size={12} className="mr-1"/>}
-                                  {akt.status}
-                                </span>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* 2. TABEL LOG PELANGGARAN */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-red-200 border-t-4 border-t-red-500">
-                  <div className="flex justify-between items-center mb-6">
-                    <div>
-                      <h3 className="font-bold text-xl text-red-800 flex items-center"><Activity size={24} className="mr-2"/> Log Indikasi Kecurangan</h3>
-                      <p className="text-sm mt-1 text-gray-500">Mencatat siswa yang keluar dari aplikasi/tab saat ujian berlangsung.</p>
+                  {/* 1. TABEL AKTIVITAS LIVE */}
+                  <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-200 border-t-4 border-t-blue-500">
+                    <div className="flex justify-between items-center mb-6">
+                      <div>
+                        <h3 className="font-bold text-xl text-blue-800 flex items-center"><Users size={24} className="mr-2"/> Status Live Peserta Ujian</h3>
+                        <p className="text-sm mt-1 text-gray-500">Memonitor siswa yang sedang berada di dalam ruang ujian.</p>
+                      </div>
+                      <button onClick={() => fetchData(true)} className="bg-gray-100 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Refresh Data</button>
+                    </div>
+                    
+                    <div className="overflow-x-auto border rounded-lg">
+                      <table className="w-full text-left text-sm border-collapse">
+                        <thead><tr className="bg-blue-50 text-blue-800 border-b border-blue-100"><th className="p-4">Ruangan</th><th className="p-4">Nama Siswa</th><th className="p-4">Kelas</th><th className="p-4">Waktu Mulai</th><th className="p-4">Status Saat Ini</th></tr></thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {aktivitasSiswa.length === 0 ? (
+                            <tr><td colSpan="5" className="p-8 text-center text-gray-500 font-bold">Belum ada siswa yang memulai ujian.</td></tr>
+                          ) : (
+                            aktivitasSiswa.map((akt) => (
+                              <tr key={akt.id} className="hover:bg-blue-50/30">
+                                <td className="p-4 font-bold text-gray-800">{akt.sesi_ujian?.ruangan?.nama_ruangan || '-'}</td>
+                                <td className="p-4 font-bold">{akt.users?.nama_lengkap || '-'}</td>
+                                <td className="p-4">{akt.users?.kelas || '-'}</td>
+                                <td className="p-4 font-mono text-gray-500">{new Date(akt.waktu_mulai).toLocaleTimeString('id-ID')}</td>
+                                <td className="p-4">
+                                  <span className={`px-3 py-1 rounded-full font-bold text-xs flex items-center w-fit ${akt.status === 'Selesai Ujian' ? 'bg-gray-100 text-gray-600' : 'bg-emerald-100 text-emerald-700 animate-pulse'}`}>
+                                    {akt.status === 'Selesai Ujian' ? <CheckCircle size={12} className="mr-1"/> : <Eye size={12} className="mr-1"/>}
+                                    {akt.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-                  <div className="overflow-x-auto border rounded-lg">
-                    <table className="w-full text-left text-sm border-collapse">
-                      <thead><tr className="bg-red-50 text-red-800 border-b border-red-100"><th className="p-4">Waktu Kejadian</th><th className="p-4">Ruangan</th><th className="p-4">Nama Siswa</th><th className="p-4">Kelas</th><th className="p-4">Jenis Pelanggaran</th></tr></thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {logPelanggaran.length === 0 ? (
-                          <tr><td colSpan="5" className="p-8 text-center text-gray-500 font-bold">Belum ada catatan pelanggaran yang terdeteksi.</td></tr>
-                        ) : (
-                          logPelanggaran.map((log) => (
-                            <tr key={log.id} className="hover:bg-red-50/30">
-                              <td className="p-4 font-mono text-gray-600">{new Date(log.waktu).toLocaleTimeString('id-ID')}</td>
-                              <td className="p-4 font-bold">{log.sesi_ujian?.ruangan?.nama_ruangan || '-'}</td>
-                              <td className="p-4 font-bold">{log.users?.nama_lengkap || '-'}</td>
-                              <td className="p-4">{log.users?.kelas || '-'}</td>
-                              <td className="p-4"><span className="bg-red-100 text-red-700 px-2 py-1 rounded font-bold text-xs">{log.keterangan}</span></td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+
+                  {/* 2. TABEL LOG PELANGGARAN */}
+                  <div className="bg-white p-6 rounded-xl shadow-sm border border-red-200 border-t-4 border-t-red-500">
+                    <div className="flex justify-between items-center mb-6">
+                      <div>
+                        <h3 className="font-bold text-xl text-red-800 flex items-center"><Activity size={24} className="mr-2"/> Log Indikasi Kecurangan</h3>
+                        <p className="text-sm mt-1 text-gray-500">Mencatat siswa yang keluar dari aplikasi/tab saat ujian berlangsung.</p>
+                      </div>
+                    </div>
+                    <div className="overflow-x-auto border rounded-lg">
+                      <table className="w-full text-left text-sm border-collapse">
+                        <thead><tr className="bg-red-50 text-red-800 border-b border-red-100"><th className="p-4">Waktu Kejadian</th><th className="p-4">Ruangan</th><th className="p-4">Nama Siswa</th><th className="p-4">Kelas</th><th className="p-4">Jenis Pelanggaran</th></tr></thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {logPelanggaran.length === 0 ? (
+                            <tr><td colSpan="5" className="p-8 text-center text-gray-500 font-bold">Belum ada catatan pelanggaran yang terdeteksi.</td></tr>
+                          ) : (
+                            logPelanggaran.map((log) => (
+                              <tr key={log.id} className="hover:bg-red-50/30">
+                                <td className="p-4 font-mono text-gray-600">{new Date(log.waktu).toLocaleTimeString('id-ID')}</td>
+                                <td className="p-4 font-bold">{log.sesi_ujian?.ruangan?.nama_ruangan || '-'}</td>
+                                <td className="p-4 font-bold">{log.users?.nama_lengkap || '-'}</td>
+                                <td className="p-4">{log.users?.kelas || '-'}</td>
+                                <td className="p-4"><span className="bg-red-100 text-red-700 px-2 py-1 rounded font-bold text-xs">{log.keterangan}</span></td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
+
                 </div>
-
-              </div>
-            )}
-
-          </div>
-        )}
+              )}
+            </>
+          )}
+        </div>
       </main>
     </div>
   );
@@ -987,7 +958,7 @@ const StudentView = ({ currentUser, currentSesi }) => {
     }
 
     return (
-      <div className="max-w-2xl mx-auto mt-10 p-6">
+      <div className="max-w-2xl mx-auto mt-10 p-6 pb-24">
         <div className={`bg-white rounded-2xl shadow-xl overflow-hidden border-t-8 ${nilaiAkhir >= 85 ? 'border-blue-500' : nilaiAkhir >= 70 ? 'border-emerald-500' : 'border-orange-500'}`}>
            <div className="p-8 text-center border-b border-gray-100">
                <EmoticonIcon className={`w-24 h-24 mx-auto mb-4 ${colorClass} animate-bounce`} />
@@ -1024,7 +995,7 @@ const StudentView = ({ currentUser, currentSesi }) => {
   // --- TAMPILAN RUANG TUNGGU (LOBBY + MOTIVASI + BIODATA) ---
   if (!examMulai) {
      return (
-        <div className="max-w-4xl mx-auto p-4 md:p-6 mt-6">
+        <div className="max-w-4xl mx-auto p-4 md:p-6 mt-6 pb-24">
            <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden mb-8 flex flex-col md:flex-row">
               <div className="bg-blue-600 text-white p-8 md:w-1/3 flex flex-col justify-center items-center text-center">
                   <div className="bg-white/20 p-4 rounded-full mb-4">
@@ -1081,7 +1052,7 @@ const StudentView = ({ currentUser, currentSesi }) => {
   const soalAktif = soalList[currentIndex];
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-6 relative">
+    <div className="max-w-6xl mx-auto p-4 md:p-6 pb-24 relative">
       {showWarning && (
         <div className="fixed inset-0 bg-red-900 bg-opacity-95 z-50 flex flex-col items-center justify-center p-6 text-center"><AlertTriangle className="w-32 h-32 text-yellow-400 mb-6 animate-pulse" /><h1 className="text-4xl font-bold text-white mb-4">PERINGATAN KECURANGAN!</h1><p className="text-white mb-8">Aktivitas keluar layar telah dilaporkan ke Pengawas.</p><button onClick={() => setShowWarning(false)} className="bg-white text-red-900 font-bold py-3 px-8 rounded-lg">Kembali Ujian</button></div>
       )}
@@ -1176,21 +1147,15 @@ export default function CBTSystem() {
       <div className="min-h-screen bg-[#f0f4f8] flex items-center justify-center p-4">
         <div className="bg-white w-full max-w-md rounded-[32px] shadow-lg overflow-hidden relative">
           
-          {/* Garis Hijau di Atas */}
           <div className="h-3 bg-[#008751] w-full absolute top-0 left-0"></div>
 
           <div className="p-8 pt-10 flex flex-col items-center">
-            {/* Logo Sekolah */}
             <img src={logoSekolah} alt="Logo SMK Samudera Buana" className="w-24 h-auto object-contain mb-4" />
             
-            {/* Judul & Sub-judul */}
             <h1 className="text-2xl font-bold text-[#0077b6] text-center mb-1">PORTAL SMK SAMUDERA BUANA</h1>
             <p className="text-gray-500 text-sm text-center mb-8">Login siswa, guru, atau admin</p>
 
-            {/* Form Login */}
             <form onSubmit={handleLogin} className="w-full space-y-4">
-              
-              {/* Input Username */}
               <input 
                 type="text" 
                 required 
@@ -1200,7 +1165,6 @@ export default function CBTSystem() {
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0077b6] focus:border-transparent placeholder-gray-400" 
               />
               
-              {/* Input Password */}
               <input 
                 type="password" 
                 required 
@@ -1210,7 +1174,6 @@ export default function CBTSystem() {
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0077b6] focus:border-transparent placeholder-gray-400" 
               />
 
-              {/* Input Token Ujian */}
               <div className="pt-2">
                 <input 
                   type="text" 
@@ -1224,7 +1187,6 @@ export default function CBTSystem() {
                 </p>
               </div>
 
-              {/* Tombol Login */}
               <button 
                 type="submit" 
                 className="w-full bg-[#0077b6] hover:bg-[#025f92] text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 mt-2 tracking-wide"
@@ -1233,7 +1195,6 @@ export default function CBTSystem() {
               </button>
             </form>
 
-            {/* Footer Copyright */}
             <div className="w-full border-t border-gray-100 mt-8 pt-4">
               <p className="text-center text-xs text-gray-400 font-medium">Copyright © rzwann_m</p>
             </div>
@@ -1244,13 +1205,13 @@ export default function CBTSystem() {
     );
   }
 
- return (
-    <div className="h-screen w-screen flex flex-col bg-slate-50 font-sans text-slate-800">
+  // --- ROOT LAYOUT BARU (100% FIXED & INDEPENDENT SCROLL) ---
+  return (
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-50 font-sans text-slate-800">
       
-      {/* NAVBAR ATAS (Tema Terang / SRMS Style) */}
-      <nav className="h-16 bg-white border-b border-slate-200 px-6 flex justify-between items-center z-20 shrink-0 shadow-sm">
+      {/* NAVBAR ATAS */}
+      <nav className="h-16 shrink-0 bg-white border-b border-slate-200 px-6 flex justify-between items-center z-20 shadow-sm">
         <div className="flex items-center space-x-3">
-          {/* Logo SMK Samudera Buana */}
           <div className="w-10 h-10 flex items-center justify-center">
             <img src={logoSekolah} alt="Logo SMK" className="w-full h-full object-contain" />
           </div>
@@ -1274,20 +1235,21 @@ export default function CBTSystem() {
         </div>
       </nav>
 
-      {/* AREA KONTEN UTAMA & FOOTER */}
-      <div className="flex-1 min-h-0 flex flex-col w-full relative">
-        <div className="flex-1 min-h-0 w-full flex">
-          {currentUser?.role === 'siswa' ? (
-            <StudentView currentUser={currentUser} currentSesi={currentSesi} />
-          ) : (
-            <DashboardView currentUser={currentUser} />
-          )}
-        </div>
-        
-        {/* Footer Copyright */}
-        <div className="flex-none text-center py-2 text-[11px] text-gray-500 border-t border-gray-200 bg-white font-medium z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.02)]">
-          Copyright © rzwann_m
-        </div>
+      {/* AREA KONTEN UTAMA (KUNCI SCROLL ADA DI SINI) */}
+      <div className="flex-1 min-h-0 w-full relative">
+        {currentUser?.role === 'siswa' ? (
+          <div className="h-full w-full overflow-y-auto">
+             <StudentView currentUser={currentUser} currentSesi={currentSesi} />
+          </div>
+        ) : (
+          <DashboardView currentUser={currentUser} />
+        )}
+      </div>
+      
+      {/* FOOTER COPYRIGHT */}
+      <div className="shrink-0 text-center py-2 text-[11px] text-gray-500 border-t border-gray-200 bg-white font-medium z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.02)]">
+        Copyright © rzwann_m
       </div>
     </div>
   );
+}
