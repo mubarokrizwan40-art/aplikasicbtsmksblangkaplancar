@@ -125,6 +125,77 @@ const DashboardView = ({ currentUser }) => {
     if (showLoading) setLoading(false);
   };
 
+  // --- FUNGSI DOWNLOAD TEMPLATE EXCEL SOAL ---
+  const downloadTemplateSoal = () => {
+    const templateData = [
+      {
+        Pertanyaan: 'Contoh: Ibu kota negara Indonesia adalah...',
+        A: 'Bandung',
+        B: 'Jakarta',
+        C: 'Surabaya',
+        D: 'Medan',
+        E: 'Makassar',
+        Kunci: 'B',
+        Bobot: 10
+      },
+      {
+        Pertanyaan: 'Contoh soal 4 opsi (kosongkan kolom E jika hanya A-D): Hasil dari 5 x 5 adalah...',
+        A: '15',
+        B: '20',
+        C: '25',
+        D: '30',
+        E: '',
+        Kunci: 'C',
+        Bobot: 10
+      }
+    ];
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    ws['!cols'] = [
+      { wch: 48 }, // Pertanyaan
+      { wch: 20 }, // A
+      { wch: 20 }, // B
+      { wch: 20 }, // C
+      { wch: 20 }, // D
+      { wch: 20 }, // E
+      { wch: 10 }, // Kunci
+      { wch: 10 }  // Bobot
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template Soal");
+    const namaMapel = selectedPaket?.mata_pelajaran?.nama_mapel?.replace(/\s+/g, '_') || 'CBT';
+    XLSX.writeFile(wb, `Template_Soal_${namaMapel}.xlsx`);
+  };
+
+  // --- FUNGSI IMPORT EXCEL (SISWA & SOAL) ---
+  const uploadExcel = async (e, tableName, mapFunction) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      const formattedData = jsonData.map(mapFunction).filter(item => item !== null && item !== undefined);
+
+      if (formattedData.length === 0) {
+        alert("Data Excel kosong atau format kolom tidak sesuai!");
+        return;
+      }
+
+      const { error } = await supabase.from(tableName).insert(formattedData);
+      if (error) throw error;
+
+      alert(`Berhasil mengimpor ${formattedData.length} data!`);
+      fetchData(true);
+    } catch (err) {
+      alert("Gagal mengimpor Excel: " + err.message);
+    } finally {
+      setIsUploading(false);
+      e.target.value = null;
+    }
+  };
+
   const handleTambahRuangan = async (e) => {
     e.preventDefault();
     await supabase.from('ruangan').insert([{ nama_ruangan: formRuangan.nama }]);
@@ -554,8 +625,8 @@ const DashboardView = ({ currentUser }) => {
                       </div>
 
                       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                        <div className="xl:col-span-1 space-y-4 relative">
-                          <form onSubmit={handleTambahSoal} className="bg-white p-5 rounded-lg shadow border border-gray-200 space-y-4 sticky top-0">
+                        <div className="xl:col-span-1 space-y-4">
+                          <form onSubmit={handleTambahSoal} className="bg-white p-5 rounded-lg shadow border border-gray-200 space-y-4">
                             <h3 className="font-bold text-gray-800 text-lg mb-2 flex items-center">
                               <PlusCircle size={18} className="mr-2 text-blue-600" /> 
                               {editingSoalId ? "Edit Soal" : "Tulis Soal Manual"}
@@ -602,6 +673,40 @@ const DashboardView = ({ currentUser }) => {
                             </div>
                           </form>
 
+                          {/* IMPORT SOAL EXCEL + DOWNLOAD TEMPLATE */}
+                          <div className="bg-white p-5 rounded-lg shadow border border-emerald-200 bg-emerald-50 text-center space-y-2.5">
+                            <h3 className="font-bold text-emerald-900 text-sm flex items-center justify-center">
+                              <FileSpreadsheet size={16} className="mr-2"/> Import Excel (Otomatis Masuk Paket Ini)
+                            </h3>
+                            <p className="text-[11px] text-emerald-700">
+                              Unduh template terlebih dahulu agar format kolom sesuai.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={downloadTemplateSoal}
+                              className="w-full bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold py-2 rounded text-xs flex items-center justify-center transition shadow-sm"
+                            >
+                              <Download size={14} className="mr-1.5" /> Download Template Excel
+                            </button>
+                            <label className={`block w-full ${isUploading ? 'bg-gray-400' : 'bg-emerald-600 hover:bg-emerald-700'} text-white font-bold py-2.5 rounded text-sm cursor-pointer transition shadow-sm`}>
+                              {isUploading ? "Loading..." : "Pilih File Excel"}
+                              <input type="file" accept=".xlsx, .xls, .csv" className="hidden" disabled={isUploading} 
+                                onChange={(e) => uploadExcel(e, 'soal', row => ({
+                                    paket_id: selectedPaket.id,
+                                    mapel_id: selectedPaket.mapel_id,
+                                    teks_pertanyaan: String(row.teks_pertanyaan || row.Pertanyaan || row.pertanyaan || ''),
+                                    opsi_a: String(row.opsi_a || row.A || row.a || ''),
+                                    opsi_b: String(row.opsi_b || row.B || row.b || ''),
+                                    opsi_c: String(row.opsi_c || row.C || row.c || ''),
+                                    opsi_d: String(row.opsi_d || row.D || row.d || ''),
+                                    opsi_e: String(row.opsi_e || row.E || row.e || ''),
+                                    kunci_jawaban: String(row.Kunci || row.kunci || 'A').toUpperCase().trim(),
+                                    bobot_nilai: Number(row.Bobot || row.bobot || 10),
+                                    status: 'publish'
+                                }))} 
+                              />
+                            </label>
+                          </div>
                         </div>
 
                         <div className="xl:col-span-2 space-y-4">
@@ -620,7 +725,6 @@ const DashboardView = ({ currentUser }) => {
                                   <span className={soal.kunci_jawaban === 'C' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded' : 'px-2'}>C. {soal.opsi_c}</span>
                                   <span className={soal.kunci_jawaban === 'D' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded' : 'px-2'}>D. {soal.opsi_d}</span>
                                   
-                                  {/* Ini tambahan untuk render Opsi E */}
                                   {soal.opsi_e && (
                                     <span className={soal.kunci_jawaban === 'E' ? 'font-bold text-emerald-600 bg-emerald-50 px-2 rounded col-span-2' : 'px-2 col-span-2'}>E. {soal.opsi_e}</span>
                                   )}
@@ -894,7 +998,6 @@ const StudentView = ({ currentUser, currentSesi }) => {
      setEndTime(newEndTime);
      setExamMulai(true);
 
-     // --- FITUR BARU: Catat Aktivitas Siswa Mulai Ujian ---
      const { data: cekAkt } = await supabase.from('aktivitas_ujian').select('id').eq('siswa_id', currentUser.id).eq('sesi_ujian_id', currentSesi.id);
      if (!cekAkt || cekAkt.length === 0) {
          await supabase.from('aktivitas_ujian').insert({ siswa_id: currentUser.id, sesi_ujian_id: currentSesi.id, status: 'Sedang Mengerjakan' });
@@ -927,7 +1030,6 @@ const StudentView = ({ currentUser, currentSesi }) => {
       await supabase.from('jawaban_siswa').insert(dataUntukDisimpan);
     }
 
-    // --- FITUR BARU: Update Status Aktivitas menjadi Selesai ---
     await supabase.from('aktivitas_ujian').update({ status: 'Selesai Ujian' }).eq('siswa_id', currentUser.id).eq('sesi_ujian_id', currentSesi.id);
     
     localStorage.removeItem(examKey); localStorage.removeItem(`${examKey}_endTime`); setIsSelesai(true);
@@ -935,7 +1037,6 @@ const StudentView = ({ currentUser, currentSesi }) => {
 
   if (loading) return <div className="p-10 text-center font-bold text-emerald-600">Mempersiapkan Lingkungan Ujian...</div>;
   
-  // --- TAMPILAN HASIL UJIAN (DINAMIS & LENGKAP) ---
   if (isSelesai) {
     let EmoticonIcon = Flame;
     let message = "Jangan menyerah!";
@@ -992,7 +1093,6 @@ const StudentView = ({ currentUser, currentSesi }) => {
     );
   }
 
-  // --- TAMPILAN RUANG TUNGGU (LOBBY + MOTIVASI + BIODATA) ---
   if (!examMulai) {
      return (
         <div className="max-w-4xl mx-auto p-4 md:p-6 mt-6 pb-24">
@@ -1048,7 +1148,6 @@ const StudentView = ({ currentUser, currentSesi }) => {
      );
   }
 
-  // --- TAMPILAN SOAL UJIAN (SETELAH KLIK KERJAKAN) ---
   const soalAktif = soalList[currentIndex];
 
   return (
@@ -1205,7 +1304,6 @@ export default function CBTSystem() {
     );
   }
 
-  // --- ROOT LAYOUT BARU (100% FIXED & INDEPENDENT SCROLL) ---
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-50 font-sans text-slate-800">
       
@@ -1235,7 +1333,7 @@ export default function CBTSystem() {
         </div>
       </nav>
 
-      {/* AREA KONTEN UTAMA (KUNCI SCROLL ADA DI SINI) */}
+      {/* AREA KONTEN UTAMA */}
       <div className="flex-1 min-h-0 w-full relative">
         {currentUser?.role === 'siswa' ? (
           <div className="h-full w-full overflow-y-auto">
